@@ -1,0 +1,16 @@
+/* Design tokens / CSS custom properties */
+
+:root {
+  --background: hsl(60 9% 98%);
+  --foreground: hsl(24 10% 10%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(24 10% 10%);
+  --primary: hsl(142 76% 36%);
+  --primary-foreground: hsl(0 0% 100%);
+  --muted: hsl(60 5% 96%);
+  --muted-foreground: hsl(24 5% 64%);
+  --accent: hsl(60 5% 96%);
+  --accent-foreground: hsl(24 10% 10%);
+  --border: hsl(20 6% 90%);
+  --radius: 8px;
+}

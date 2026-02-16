@@ -1,0 +1,25 @@
+/* Main content area */
+
+.main-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .main-content {
+    padding: 32px;
+  }
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+}
+
+#line-temp,
+#bar-region,
+#scatter-uv {
+  margin-bottom: 32px;
+}

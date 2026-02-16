@@ -1,0 +1,161 @@
+/* Sidebar navigation */
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 41;
+}
+
+.sidebar-overlay.visible {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+.sidebar {
+  position: relative;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 256px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  /* transition:
+    width 0.3s,
+    transform 0.3s; */
+
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+  width: 65px; /* 1px for border */
+}
+
+.sidebar.collapsed .sidebar-link-text,
+.sidebar.collapsed .sidebar-brand {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  margin-inline: auto;
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 256px;
+    position: absolute;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    width: 256px;
+  }
+
+  .sidebar.collapsed .sidebar-link-text,
+  .sidebar.collapsed .sidebar-brand {
+    display: block;
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-brand {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sidebar-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--foreground);
+}
+
+.sidebar-toggle:hover {
+  background: var(--accent);
+}
+
+@media (min-width: 1024px) {
+  .sidebar-toggle {
+    display: flex;
+  }
+}
+
+.sidebar-toggle-icon {
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar.collapsed .sidebar-nav {
+  padding: 16px 14px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--foreground);
+  text-decoration: none;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.sidebar.collapsed .sidebar-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sidebar-link:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.sidebar-link.active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 500;
+}
+
+.sidebar-icon {
+  flex-shrink: 0;
+}

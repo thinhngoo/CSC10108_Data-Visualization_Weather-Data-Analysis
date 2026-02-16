@@ -1,0 +1,40 @@
+/* Dataset page */
+
+.dataset-section {
+  margin-bottom: 40px;
+}
+
+.dataset-section h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.dataset-meta {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.dataset-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.dataset-table {
+  font-size: 14px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataset-table th,
+.dataset-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.dataset-table th {
+  background: var(--muted);
+  font-weight: 600;
+}

@@ -1,0 +1,73 @@
+/* Top navbar */
+
+.top-navbar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 68px;
+  padding: 0 16px;
+}
+
+@media (min-width: 768px) {
+  .navbar-inner {
+    padding: 0 32px;
+  }
+}
+
+.navbar-menu-btn {
+  display: flex;
+  padding: 8px;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--foreground);
+}
+
+.navbar-menu-btn:hover {
+  background: var(--accent);
+}
+
+@media (min-width: 1024px) {
+  .navbar-menu-btn {
+    display: none;
+  }
+}
+
+.navbar-search {
+  flex: 1;
+  max-width: 384px;
+  position: relative;
+}
+
+.navbar-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.navbar-search-input {
+  width: 100%;
+  padding: 8px 16px 8px 40px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  outline: none;
+}
+
+.navbar-search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
+}
