@@ -3,6 +3,9 @@ import { drawLineTemp } from "./charts/lineTemp.js";
 import { drawBarRegion } from "./charts/barRegion.js";
 import { drawScatterUV } from "./charts/scatterUV.js";
 import { renderDatasetPage } from "./pages/dataset.js";
+import { drawScatterUVTemp }   from "./charts/scatterUVTemp.js";
+import { drawLineDaylight }    from "./charts/lineDaylight.js";
+import { drawScatterDaylight } from "./charts/scatterDaylight.js";
 
 let cachedData = null;
 
@@ -27,6 +30,10 @@ function renderHome(data) {
   drawLineTemp(data);
   drawBarRegion(data);
   drawScatterUV(data);
+
+  drawScatterUVTemp(data);
+  drawLineDaylight(data);
+  drawScatterDaylight(data);
 }
 
 function renderDataset(containerEl, mode, rawData, cleanedData) {
