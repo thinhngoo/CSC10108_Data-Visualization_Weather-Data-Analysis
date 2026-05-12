@@ -4,7 +4,60 @@
 
 {% block content %}
 <div id="page-analysis" class="page">
-  <h1 class="page-title">UV & Độ dài ban ngày</h1>
+  <h1 class="page-title">Phân tích thời tiết</h1>
+
+  <!-- Q7 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.7 – Tần suất trạng thái thời tiết</h2>
+    <p class="chart-section-desc">
+      Biểu đồ thanh ngang đếm số ngày xuất hiện của từng trạng thái thời tiết
+      (Day.Condition.Text), sắp xếp giảm dần. Di chuột vào thanh để xem số ngày
+      và tỉ lệ phần trăm trên toàn tập dữ liệu.
+    </p>
+    <div id="bar-condition" class="chart-container"></div>
+  </section>
+
+  <!-- Q8 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.8 – Nhiệt độ theo trạng thái thời tiết</h2>
+    <p class="chart-section-desc">
+      Box plot phân bố nhiệt độ trung bình (Day.Avgtemp_C) cho từng trạng thái
+      thời tiết, sắp xếp theo median tăng dần. Mỗi hộp gồm Q1–Median–Q3, râu
+      kéo tới min/max; các vạch mờ phía sau là các quan sát từng ngày. Di chuột
+      vào hộp để xem chi tiết min, Q1, median, Q3, max, mean và số ngày.
+    </p>
+    <div id="box-condition-temp" class="chart-container"></div>
+  </section>
+
+  <!-- Q9.1 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.9.1 – Nhiệt độ trung bình giữa các vùng</h2>
+    <p class="chart-section-desc">
+      Trung bình nhiệt độ ngày (Day.Avgtemp_C) theo từng vùng địa lý
+      (Location.Region), sắp xếp tăng dần. Hover vào cột để xem giá trị chi tiết.
+    </p>
+    <div id="bar-region-temp" class="chart-container"></div>
+  </section>
+
+  <!-- Q9.2 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.9.2 – Độ ẩm trung bình giữa các vùng</h2>
+    <p class="chart-section-desc">
+      Trung bình độ ẩm ngày (Day.Avghumidity, %) theo từng vùng, sắp xếp tăng
+      dần. Thang đo cố định 0–100% để dễ so sánh.
+    </p>
+    <div id="bar-region-humidity" class="chart-container"></div>
+  </section>
+
+  <!-- Q9.3 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.9.3 – Tổng lượng mưa giữa các vùng</h2>
+    <p class="chart-section-desc">
+      Tổng lượng mưa toàn giai đoạn (sum of Day.Totalprecip_mm) cho mỗi vùng,
+      sắp xếp tăng dần. Giá trị được hiển thị dạng K/M trên trục Y.
+    </p>
+    <div id="bar-region-precip" class="chart-container"></div>
+  </section>
 
   <!-- Q10 -->
   <section class="chart-section">

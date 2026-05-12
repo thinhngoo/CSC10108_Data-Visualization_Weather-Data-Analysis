@@ -13,6 +13,8 @@ export function parseForCharts(rows) {
         date: parseDate(d.date),
         region: d["location.region"].trim(),
         temp: +d["day.avgtemp_c"],
+        humidity: +d["day.avghumidity"],
+        precip: +d["day.totalprecip_mm"],
         uv: +d["day.uv"],
         condition: d["day.condition.text"] || "Unknown",
         lat: +d["location.lat"],

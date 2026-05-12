@@ -4,9 +4,12 @@ import {
   parseForCharts,
 } from "./loaders/index.js";
 import { renderDatasetPage } from "./pages/dataset.js";
-import { drawScatterUVTemp }   from "./charts/scatterUVTemp.js";
-import { drawLineDaylight }    from "./charts/lineDaylight.js";
-import { drawScatterDaylight } from "./charts/scatterDaylight.js";
+import { drawBarCondition }      from "./charts/barCondition.js";
+import { drawBoxConditionTemp }  from "./charts/boxConditionTemp.js";
+import { drawRegionBars }        from "./charts/regionBars.js";
+import { drawScatterUVTemp }     from "./charts/scatterUVTemp.js";
+import { drawLineDaylight }      from "./charts/lineDaylight.js";
+import { drawScatterDaylight }   from "./charts/scatterDaylight.js";
 
 let cachedData = null;
 
@@ -19,15 +22,29 @@ async function loadAllData() {
 }
 
 function renderAnalysis(data) {
-  const q10El = document.getElementById("scatter-uv-temp");
-  const q11El = document.getElementById("line-daylight");
-  const q12El = document.getElementById("scatter-daylight");
-  if (!q10El || !q11El || !q12El) return;
+  const q7El      = document.getElementById("bar-condition");
+  const q8El      = document.getElementById("box-condition-temp");
+  const q9TempEl  = document.getElementById("bar-region-temp");
+  const q9HumEl   = document.getElementById("bar-region-humidity");
+  const q9PrecEl  = document.getElementById("bar-region-precip");
+  const q10El     = document.getElementById("scatter-uv-temp");
+  const q11El     = document.getElementById("line-daylight");
+  const q12El     = document.getElementById("scatter-daylight");
+  if (!q7El || !q8El || !q9TempEl || !q9HumEl || !q9PrecEl ||
+      !q10El || !q11El || !q12El) return;
 
-  q10El.innerHTML = "";
-  q11El.innerHTML = "";
-  q12El.innerHTML = "";
+  q7El.innerHTML     = "";
+  q8El.innerHTML     = "";
+  q9TempEl.innerHTML = "";
+  q9HumEl.innerHTML  = "";
+  q9PrecEl.innerHTML = "";
+  q10El.innerHTML    = "";
+  q11El.innerHTML    = "";
+  q12El.innerHTML    = "";
 
+  drawBarCondition(data);
+  drawBoxConditionTemp(data);
+  drawRegionBars(data);
   drawScatterUVTemp(data);
   drawLineDaylight(data);
   drawScatterDaylight(data);
