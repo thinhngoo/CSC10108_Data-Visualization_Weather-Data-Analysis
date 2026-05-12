@@ -1,8 +1,8 @@
 import { loadData, cleanData } from "./loaders/index.js";
-import { drawLineTemp } from "./charts/lineTemp.js";
-import { drawBarRegion } from "./charts/barRegion.js";
-import { drawScatterUV } from "./charts/scatterUV.js";
 import { renderDatasetPage } from "./pages/dataset.js";
+import { drawScatterUVTemp }   from "./charts/scatterUVTemp.js";
+import { drawLineDaylight }    from "./charts/lineDaylight.js";
+import { drawScatterDaylight } from "./charts/scatterDaylight.js";
 
 let cachedData = null;
 
@@ -14,19 +14,19 @@ async function loadAllData() {
   return cachedData;
 }
 
-function renderHome(data) {
-  const lineEl = document.getElementById("line-temp");
-  const barEl = document.getElementById("bar-region");
-  const scatterEl = document.getElementById("scatter-uv");
-  if (!lineEl || !barEl || !scatterEl) return;
+function renderAnalysis(data) {
+  const q10El = document.getElementById("scatter-uv-temp");
+  const q11El = document.getElementById("line-daylight");
+  const q12El = document.getElementById("scatter-daylight");
+  if (!q10El || !q11El || !q12El) return;
 
-  lineEl.innerHTML = "";
-  barEl.innerHTML = "";
-  scatterEl.innerHTML = "";
+  q10El.innerHTML = "";
+  q11El.innerHTML = "";
+  q12El.innerHTML = "";
 
-  drawLineTemp(data);
-  drawBarRegion(data);
-  drawScatterUV(data);
+  drawScatterUVTemp(data);
+  drawLineDaylight(data);
+  drawScatterDaylight(data);
 }
 
 function renderDataset(containerEl, mode, rawData, cleanedData) {
@@ -36,19 +36,19 @@ function renderDataset(containerEl, mode, rawData, cleanedData) {
 
 function getRouteFromPath() {
   const path = location.pathname.replace(/\/$/, "") || "/";
-  if (path === "/") return "home";
+  if (path === "/" || path === "/analysis") return "analysis";
   if (path === "/dataset/raw") return "dataset-raw";
   if (path === "/dataset/cleaning") return "dataset-cleaning";
-  return "home";
+  return "analysis";
 }
 
 async function initPage() {
   const route = getRouteFromPath();
   const { raw, cleaned } = await loadAllData();
 
-  if (route === "home") renderHome(cleaned);
-  else if (route === "dataset-raw")
+  if (route === "dataset-raw")
     renderDataset(document.getElementById("page-dataset"), "raw", raw, cleaned);
+  else if (route === "analysis") renderAnalysis(cleaned);
   else if (route === "dataset-cleaning")
     renderDataset(
       document.getElementById("page-dataset"),

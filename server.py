@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, redirect, render_template, send_from_directory
 
 app = Flask(__name__, static_url_path="", template_folder="templates")
 ROOT = Path(__file__).resolve().parent
@@ -18,7 +18,13 @@ def collect_watch_files():
 
 @app.route("/")
 def index():
-    return render_template("home.html", active_route="home")
+    return render_template("analysis.html", active_route="analysis")
+
+
+@app.route("/analysis")
+@app.route("/analysis/")
+def analysis_redirect():
+    return redirect("/", code=308)
 
 
 @app.route("/dataset/raw/")
@@ -29,7 +35,6 @@ def dataset_raw():
 @app.route("/dataset/cleaning/")
 def dataset_cleaning():
     return render_template("cleaning.html", active_route="dataset-cleaning")
-
 
 @app.route("/styles/<path:path>")
 def serve_styles(path):

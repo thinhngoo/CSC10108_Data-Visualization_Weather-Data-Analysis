@@ -1,0 +1,88 @@
+/* ── Q10 / Q11 / Q12 chart sections ── */
+
+.chart-section {
+  margin-bottom: 48px;
+}
+
+.chart-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: var(--foreground);
+}
+
+.chart-section-desc {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 0 0 16px 0;
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+.chart-container {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* Filter buttons row (above Q11 and Q12 charts) */
+.chart-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.chart-filter-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.chart-filter-btn.active {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.chart-filter-btn:hover {
+  opacity: 0.8;
+}
+
+/* Shared tooltip (injected into <body> by chart scripts) */
+.chart-tooltip {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--foreground);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 9999;
+  min-width: 160px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chart-tooltip strong {
+  color: var(--primary);
+}
+
+/* SVG grid lines (applied via D3 class) */
+.grid line {
+  stroke: var(--border);
+  stroke-dasharray: 3 4;
+}
+.grid path {
+  display: none;
+}

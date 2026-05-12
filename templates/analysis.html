@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}UV & Daylight Analysis{% endblock %}
+
+{% block content %}
+<div id="page-analysis" class="page">
+  <h1 class="page-title">UV & Độ dài ban ngày</h1>
+
+  <!-- Q10 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.10 – Chỉ số UV và Nhiệt độ trung bình</h2>
+    <p class="chart-section-desc">
+      Scatter plot thể hiện mối quan hệ giữa chỉ số UV (Day.Uv) và nhiệt độ trung bình
+      ngày (Day.Avgtemp_C), phân theo vùng địa lý. Hover để xem chi tiết, click để
+      highlight một điểm.
+    </p>
+    <div id="scatter-uv-temp" class="chart-container"></div>
+  </section>
+
+  <!-- Q11 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.11 – Độ dài ban ngày theo thời gian</h2>
+    <p class="chart-section-desc">
+      Đường cong trung bình số giờ có ánh sáng ban ngày (HourOfDayLight) qua 409 ngày,
+      nhóm theo vùng. Dùng các nút bên dưới để bật/tắt từng vùng — đường sẽ mờ dần
+      với transition mượt.
+    </p>
+    <div id="line-daylight" class="chart-container"></div>
+  </section>
+
+  <!-- Q12 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.12 – Ban ngày dài có ảnh hưởng đến UV không?</h2>
+    <p class="chart-section-desc">
+      Scatter plot với trục X là HourOfDayLight và trục Y là Day.Uv. Từng điểm là một
+      tổ hợp (vùng, ngày). Hover để xem chi tiết, filter theo vùng để so sánh.
+    </p>
+    <div id="scatter-daylight" class="chart-container"></div>
+  </section>
+</div>
+{% endblock %}
