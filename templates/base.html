@@ -51,12 +51,12 @@
             </svg>
             <span class="sidebar-link-text">Raw</span>
           </a>
-          <a href="/dataset/cleaning/" class="sidebar-link {% if active_route == 'dataset-cleaning' %}active{% endif %}" data-route="dataset-cleaning">
+          <a href="/dataset/refined/" class="sidebar-link {% if active_route == 'dataset-refined' %}active{% endif %}" data-route="dataset-refined">
             <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
               <path d="m9 12 2 2 4-4" />
             </svg>
-            <span class="sidebar-link-text">Cleaning</span>
+            <span class="sidebar-link-text">Refined</span>
           </a>
         </nav>
       </aside>
@@ -70,26 +70,13 @@
 
       <!-- Main area -->
       <div class="main-area">
-        <!-- Top navbar -->
-        <nav class="top-navbar">
-          <div class="navbar-inner">
-            <button id="navbar-menu-btn" class="navbar-menu-btn" aria-label="Toggle menu">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="4" x2="20" y1="12" y2="12" />
-                <line x1="4" x2="20" y1="6" y2="6" />
-                <line x1="4" x2="20" y1="18" y2="18" />
-              </svg>
-            </button>
-            <form class="navbar-search" onsubmit="return false;">
-              <svg class="navbar-search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              <input type="search" placeholder="Search..." class="navbar-search-input" />
-            </form>
-          </div>
-        </nav>
-
+        <button id="navbar-menu-btn" class="navbar-menu-btn" type="button" aria-label="Toggle menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
+        </button>
         <main id="app" class="main-content">
           {% block content %}{% endblock %}
         </main>

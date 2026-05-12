@@ -32,9 +32,9 @@ def dataset_raw():
     return render_template("raw.html", active_route="dataset-raw")
 
 
-@app.route("/dataset/cleaning/")
-def dataset_cleaning():
-    return render_template("cleaning.html", active_route="dataset-cleaning")
+@app.route("/dataset/refined/")
+def dataset_refined():
+    return render_template("refined.html", active_route="dataset-refined")
 
 @app.route("/styles/<path:path>")
 def serve_styles(path):

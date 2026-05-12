@@ -1,4 +1,8 @@
-import { loadData, cleanData } from "./loaders/index.js";
+import {
+  loadRawDataset,
+  loadRefinedDataset,
+  parseForCharts,
+} from "./loaders/index.js";
 import { renderDatasetPage } from "./pages/dataset.js";
 import { drawScatterUVTemp }   from "./charts/scatterUVTemp.js";
 import { drawLineDaylight }    from "./charts/lineDaylight.js";
@@ -8,9 +12,9 @@ let cachedData = null;
 
 async function loadAllData() {
   if (cachedData) return cachedData;
-  const raw = await loadData();
-  const cleaned = cleanData(raw);
-  cachedData = { raw, cleaned };
+  const [raw, refined] = await Promise.all([loadRawDataset(), loadRefinedDataset()]);
+  const chartRows = parseForCharts(refined);
+  cachedData = { raw, refined, chartRows };
   return cachedData;
 }
 
@@ -29,32 +33,32 @@ function renderAnalysis(data) {
   drawScatterDaylight(data);
 }
 
-function renderDataset(containerEl, mode, rawData, cleanedData) {
+function renderDataset(containerEl, mode, raw, refined) {
   if (!containerEl) return;
-  renderDatasetPage(containerEl, mode, rawData, cleanedData);
+  renderDatasetPage(containerEl, mode, raw, refined);
 }
 
 function getRouteFromPath() {
   const path = location.pathname.replace(/\/$/, "") || "/";
   if (path === "/" || path === "/analysis") return "analysis";
   if (path === "/dataset/raw") return "dataset-raw";
-  if (path === "/dataset/cleaning") return "dataset-cleaning";
+  if (path === "/dataset/refined") return "dataset-refined";
   return "analysis";
 }
 
 async function initPage() {
   const route = getRouteFromPath();
-  const { raw, cleaned } = await loadAllData();
+  const { raw, refined, chartRows } = await loadAllData();
 
   if (route === "dataset-raw")
-    renderDataset(document.getElementById("page-dataset"), "raw", raw, cleaned);
-  else if (route === "analysis") renderAnalysis(cleaned);
-  else if (route === "dataset-cleaning")
+    renderDataset(document.getElementById("page-dataset"), "raw", raw, refined);
+  else if (route === "analysis") renderAnalysis(chartRows);
+  else if (route === "dataset-refined")
     renderDataset(
       document.getElementById("page-dataset"),
-      "cleaning",
+      "refined",
       raw,
-      cleaned,
+      refined,
     );
 }
 

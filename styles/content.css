@@ -2,13 +2,23 @@
 
 .main-content {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  width: 100%;
+  margin-inline: auto;
   padding: 16px;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 @media (min-width: 768px) {
   .main-content {
     padding: 32px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .main-content {
+    padding-top: 56px;
   }
 }
 
