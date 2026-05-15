@@ -11,6 +11,10 @@ import { drawScatterUVTemp }     from "./charts/scatterUVTemp.js";
 import { drawLineDaylight }      from "./charts/lineDaylight.js";
 import { drawScatterDaylight }   from "./charts/scatterDaylight.js";
 
+import { drawQ1Trend }           from "./charts/q1Trend.js";
+import { drawQ2Comparison }      from "./charts/q2Comparison.js";
+import { drawQ3MultiAttribute }  from "./charts/q3MultiAttribute.js";
+
 let cachedData = null;
 
 async function loadAllData() {
@@ -22,6 +26,9 @@ async function loadAllData() {
 }
 
 function renderAnalysis(data) {
+  const q1El      = document.getElementById("trend-temp");
+  const q2El      = document.getElementById("box-region-temp");
+  const q3El      = document.getElementById("combo-region-weather");
   const q7El      = document.getElementById("bar-condition");
   const q8El      = document.getElementById("box-condition-temp");
   const q9TempEl  = document.getElementById("bar-region-temp");
@@ -30,9 +37,12 @@ function renderAnalysis(data) {
   const q10El     = document.getElementById("scatter-uv-temp");
   const q11El     = document.getElementById("line-daylight");
   const q12El     = document.getElementById("scatter-daylight");
-  if (!q7El || !q8El || !q9TempEl || !q9HumEl || !q9PrecEl ||
-      !q10El || !q11El || !q12El) return;
+  
+  if (!q7El) return;
 
+  if (q1El) q1El.innerHTML = "";
+  if (q2El) q2El.innerHTML = "";
+  if (q3El) q3El.innerHTML = "";
   q7El.innerHTML     = "";
   q8El.innerHTML     = "";
   q9TempEl.innerHTML = "";
@@ -41,6 +51,10 @@ function renderAnalysis(data) {
   q10El.innerHTML    = "";
   q11El.innerHTML    = "";
   q12El.innerHTML    = "";
+
+  if (q1El) drawQ1Trend(data);
+  if (q2El) drawQ2Comparison(data);
+  if (q3El) drawQ3MultiAttribute(data);
 
   drawBarCondition(data);
   drawBoxConditionTemp(data);
