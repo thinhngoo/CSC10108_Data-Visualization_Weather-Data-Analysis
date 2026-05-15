@@ -57,7 +57,7 @@ export function drawQ1Trend(data) {
 
   const validRegion =
     prevRegion &&
-    regionOptions.some((o) => o.value === prevRegion)
+      regionOptions.some((o) => o.value === prevRegion)
       ? prevRegion
       : regions[0];
   const validYear =
@@ -163,11 +163,15 @@ export function drawQ1Trend(data) {
 
     const monthlyDataMap = d3.rollup(
       slice,
-      (v) => ({
-        avgTemp: d3.mean(v, (d) => d.temp),
-        minTemp: d3.min(v, (d) => d.minTemp || d.temp),
-        maxTemp: d3.max(v, (d) => d.maxTemp || d.temp),
-      }),
+      (v) => {
+        const minTemp = d3.mean(v, (d) => d.minTemp || d.temp);
+        const maxTemp = d3.mean(v, (d) => d.maxTemp || d.temp);
+        return {
+          avgTemp: d3.mean(v, (d) => d.temp),
+          minTemp,
+          maxTemp,
+        };
+      },
       (d) => d.date.getMonth(),
     );
 
@@ -284,8 +288,8 @@ export function drawQ1Trend(data) {
         tooltip
           .html(
             `<strong>Tháng: ${d.month + 1}</strong><br/>` +
-              `AVG Temp: ${d.avgTemp.toFixed(1)}°C<br/>` +
-              `Range: [${d.minTemp.toFixed(1)}°C - ${d.maxTemp.toFixed(1)}°C]`,
+            `AVG Temp: ${d.avgTemp.toFixed(1)}°C<br/>` +
+            `Range: [${d.minTemp.toFixed(1)}°C - ${d.maxTemp.toFixed(1)}°C]`,
           )
           .style("left", event.pageX + 15 + "px")
           .style("top", event.pageY - 28 + "px");

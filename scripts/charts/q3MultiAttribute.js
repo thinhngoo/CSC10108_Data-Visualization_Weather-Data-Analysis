@@ -49,14 +49,6 @@ export function drawQ3MultiAttribute(data) {
     .attr("value", (d) => d.v)
     .text((d) => d.t);
 
-  controls
-    .append("span")
-    .style("font-size", "0.85rem")
-    .style("color", "#4b5563")
-    .text(
-      "Lọc quý: chỉ lọc cột; nhiệt độ chỉ còn node. Chọn Tất cả để có đường nối Q1–Q4.",
-    );
-
   let tooltip = d3.select("body").select(".d3-tooltip-q3");
   if (tooltip.empty()) {
     tooltip = d3
@@ -83,7 +75,7 @@ export function drawQ3MultiAttribute(data) {
     .attr("class", "q3-panel-title")
     .style("margin", "0 0 0.5rem 0")
     .style("font-size", "1rem")
-    .text("Độ ẩm TB (cột) & nhiệt độ TB theo quý (đường) — theo vùng");
+    .text("Task 3.1 - So sánh nhiệt độ và độ ẩm trung bình theo vùng và quý");
 
   const el1 = panel1
     .append("div")
@@ -99,7 +91,7 @@ export function drawQ3MultiAttribute(data) {
     .attr("class", "q3-panel-title")
     .style("margin", "0 0 0.5rem 0")
     .style("font-size", "1rem")
-    .text("Tổng lượng mưa theo quý — theo vùng");
+    .text("Task 3.2 - Phân bố lượng mưa theo vùng và quý");
 
   const el2 = panel2
     .append("div")
@@ -371,18 +363,6 @@ export function drawQ3MultiAttribute(data) {
       );
 
     root
-      .selectAll(".xlab")
-      .data([0])
-      .join("text")
-      .attr("class", "xlab")
-      .attr("x", innerWidth / 2)
-      .attr("y", innerHeight + 92)
-      .attr("fill", "#374151")
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px")
-      .text("Vùng (sắp theo độ ẩm TB tăng dần)");
-
-    root
       .selectAll(".ylab-l")
       .data([0])
       .join("text")
@@ -626,14 +606,6 @@ export function drawQ3MultiAttribute(data) {
         g.selectAll("rect").data([0]).join("rect").attr("width", 14).attr("height", 14).attr("rx", 2).attr("fill", d.c);
         g.selectAll("text").data([0]).join("text").attr("x", 20).attr("y", 12).style("font-size", "11px").attr("fill", "#374151").text(d.lab);
       });
-
-    leg
-      .append("text")
-      .attr("x", 0)
-      .attr("y", 34)
-      .style("font-size", "10px")
-      .attr("fill", "#6b7280")
-      .text("Cột: màu theo quý · Node nhiệt đen; đường nối Q1→Q4 khi chọn Tất cả quý");
   }
 
   function drawChart2() {

@@ -64,6 +64,22 @@ export function drawQ2Comparison(data) {
     .attr("font-weight", "600")
     .style("opacity", 0);
 
+  const localRefLine = refLayer
+    .append("line")
+    .attr("class", "q2-local-avg-line")
+    .style("stroke", "#2563eb")
+    .style("stroke-width", 2)
+    .style("stroke-dasharray", "4 4")
+    .style("pointer-events", "none")
+    .style("opacity", 0);
+  const localRefLabel = refLayer
+    .append("text")
+    .attr("class", "q2-local-avg-label")
+    .attr("fill", "#2563eb")
+    .attr("font-size", "11px")
+    .attr("font-weight", "600")
+    .style("opacity", 0);
+
   const xAxisGroup = g
     .append("g")
     .attr("class", "x-axis")
@@ -178,7 +194,7 @@ export function drawQ2Comparison(data) {
         .attr("x", innerWidth - 4)
         .attr("y", yg - 6)
         .attr("text-anchor", "end")
-        .text(`TB toàn cục: ${globalAvg.toFixed(1)}°C`);
+        .text(`${globalAvg.toFixed(1)}°C`);
     } else {
       refLine.style("opacity", 0);
       refLabel.style("opacity", 0);
@@ -286,6 +302,23 @@ export function drawQ2Comparison(data) {
         d3.select(this).select(".box-rect").style("opacity", 1);
         tooltip.transition().duration(200).style("opacity", 1);
         const meanR = meanByRegion.get(d.region);
+
+        if (meanR != null && !Number.isNaN(meanR)) {
+          const yMean = y(meanR);
+          localRefLine
+            .attr("x1", 0)
+            .attr("x2", innerWidth)
+            .attr("y1", yMean)
+            .attr("y2", yMean)
+            .style("opacity", 1);
+          localRefLabel
+            .attr("x", innerWidth - 4)
+            .attr("y", yMean - 6)
+            .attr("text-anchor", "end")
+            .text(`${d.region} TB: ${meanR.toFixed(1)}°C`)
+            .style("opacity", 1);
+        }
+
         tooltip
           .html(
             `<strong>${d.region}</strong><br/>` +
@@ -302,6 +335,8 @@ export function drawQ2Comparison(data) {
       .on("mouseout", function () {
         d3.select(this).select(".box-rect").style("opacity", 0.8);
         tooltip.transition().duration(500).style("opacity", 0);
+        localRefLine.style("opacity", 0);
+        localRefLabel.style("opacity", 0);
       });
 
     const outliersData = [];
