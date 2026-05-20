@@ -121,10 +121,43 @@
   <section class="chart-section">
     <h2 class="chart-section-title">Q.7 – Tần suất trạng thái thời tiết</h2>
     <p class="chart-section-desc">
-      Biểu đồ thanh ngang đếm số ngày xuất hiện của từng trạng thái thời tiết
-      (Day.Condition.Text), sắp xếp giảm dần. Di chuột vào thanh để xem số ngày
-      và tỉ lệ phần trăm trên toàn tập dữ liệu.
+      Biểu đồ đếm số ngày xuất hiện của từng trạng thái thời tiết.
     </p>
+    <div
+      id="q7-controls"
+      class="chart-controls q7-controls"
+      style="
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        align-items: center;
+      "
+    >
+      <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem">
+        <span class="q7-control-label">Sắp xếp:</span>
+        <select
+          id="q7-sort-order"
+          class="form-select"
+          aria-label="Thứ tự sắp xếp"
+        >
+          <option value="desc">Giảm dần</option>
+          <option value="asc">Tăng dần</option>
+        </select>
+      </label>
+      <label
+        style="
+          margin: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          cursor: pointer;
+        "
+      >
+        <input type="checkbox" id="q7-sort-group" />
+        <span class="q7-control-label">Gom nhóm</span>
+      </label>
+    </div>
     <div id="bar-condition" class="chart-container"></div>
   </section>
 
@@ -134,11 +167,40 @@
       Q.8 – Nhiệt độ theo trạng thái thời tiết
     </h2>
     <p class="chart-section-desc">
-      Box plot phân bố nhiệt độ trung bình (Day.Avgtemp_C) cho từng trạng thái
-      thời tiết, sắp xếp theo median tăng dần. Mỗi hộp gồm Q1–Median–Q3, râu kéo
-      tới min/max; các vạch mờ phía sau là các quan sát từng ngày. Di chuột vào
-      hộp để xem chi tiết min, Q1, median, Q3, max, mean và số ngày.
+      Phân bố nhiệt độ trung bình cho từng trạng thái thời tiết.
     </p>
+    <div
+      id="q8-controls"
+      class="chart-controls q8-controls"
+      style="
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        align-items: center;
+      "
+    >
+      <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem">
+        <span class="q8-control-label">Xếp theo:</span>
+        <select
+          id="q8-sort-metric"
+          class="form-select"
+          aria-label="Thống kê để xếp cột box"
+        >
+          <option value="median">Trung vị (median)</option>
+          <option value="min">Tối thiểu (min)</option>
+          <option value="max">Tối đa (max)</option>
+          <option value="mean">Trung bình (mean)</option>
+        </select>
+      </label>
+      <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem">
+        <span class="q8-control-label">Thứ tự:</span>
+        <select id="q8-sort-order" class="form-select" aria-label="Chiều sắp xếp">
+          <option value="asc">Tăng dần</option>
+          <option value="desc">Giảm dần</option>
+        </select>
+      </label>
+    </div>
     <div id="box-condition-temp" class="chart-container"></div>
   </section>
 

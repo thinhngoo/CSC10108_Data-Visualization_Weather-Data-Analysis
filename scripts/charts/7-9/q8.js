@@ -1,84 +1,159 @@
 // Q8 – Nhiệt độ theo trạng thái thời tiết  (box plot per condition)
 // Container element expected: <div id="box-condition-temp"></div>
 
-const BOX_DARK = "#4ea3a8";   // Q1 → median (lower half)
-const BOX_LIGHT = "#b9e4ec";  // median → Q3 (upper half)
-const WHISKER = "#6b7280";
-const STRIP = "#4ea3a8";
+const BOX_DARK = "#4ea3a8"; // Q1 → median (lower half)
+const BOX_LIGHT = "#b9e4ec"; // median → Q3 (upper half)
+const WHISKER_STROKE = "#6b7280";
+const STRIP_STROKE = "#4ea3a8";
 
-export function drawQ8(data) {
+/** @readonly */
+const Q8_SORT_METRICS = ["min", "max", "median", "mean"];
+
+let q8LatestData = null;
+
+function normalizeQ8SortMetric(valueFromDom) {
+  return Q8_SORT_METRICS.includes(valueFromDom) ? valueFromDom : "median";
+}
+
+function attachQ8ControlsOnce() {
+  if (attachQ8ControlsOnce._attached) return;
+  const metricSelect = document.getElementById("q8-sort-metric");
+  const orderSelect = document.getElementById("q8-sort-order");
+  if (!metricSelect || !orderSelect) return;
+  attachQ8ControlsOnce._attached = true;
+  const rerunDrawFromCache = () => q8LatestData && drawQ8(q8LatestData);
+  metricSelect.addEventListener("change", rerunDrawFromCache);
+  orderSelect.addEventListener("change", rerunDrawFromCache);
+}
+
+function readQ8SortOptions() {
+  const metricSelect = document.getElementById("q8-sort-metric");
+  const orderSelect = document.getElementById("q8-sort-order");
+  const sortMetric = normalizeQ8SortMetric(metricSelect?.value ?? "median");
+  const descending = orderSelect?.value === "desc";
+  return { sortMetric, descending };
+}
+
+/**
+ * Sắp xếp mỗi hộp theo một chỉ số đã chọn (+ tie-break theo tên condition).
+ */
+function sortConditionStatsForDisplay(
+  statsUnsorted,
+  sortMetricKey,
+  sortDescending,
+) {
+  const directionSign = sortDescending ? -1 : 1;
+  return [...statsUnsorted].sort((leftRow, rightRow) => {
+    const leftValue = Number(leftRow[sortMetricKey]);
+    const rightValue = Number(rightRow[sortMetricKey]);
+    const leftOk = Number.isFinite(leftValue);
+    const rightOk = Number.isFinite(rightValue);
+    if (!leftOk && !rightOk) {
+      return String(leftRow.condition).localeCompare(
+        String(rightRow.condition),
+      );
+    }
+    if (!leftOk) return 1;
+    if (!rightOk) return -1;
+    const numericCompareRaw =
+      leftValue < rightValue ? -1 : leftValue > rightValue ? 1 : 0;
+    if (numericCompareRaw !== 0) return numericCompareRaw * directionSign;
+    return String(leftRow.condition).localeCompare(
+      String(rightRow.condition),
+      "en",
+      { sensitivity: "base" },
+    );
+  });
+}
+
+export function drawQ8(chartInputRows) {
+  q8LatestData = chartInputRows;
+  attachQ8ControlsOnce();
+
+  const { sortMetric: sortMetricKey, descending } = readQ8SortOptions();
+
   /* ── Group temps by condition & compute box stats ── */
-  const grouped = d3.rollups(
-    data.filter(
-      (d) =>
-        d.condition &&
-        d.condition !== "Unknown" &&
-        Number.isFinite(d.temp),
+  const tempsGroupedByCondition = d3.rollups(
+    chartInputRows.filter(
+      (record) =>
+        record.condition &&
+        record.condition !== "Unknown" &&
+        Number.isFinite(record.temp),
     ),
-    (rows) => rows.map((r) => r.temp).sort(d3.ascending),
-    (d) => d.condition,
+    (rowsForSameCondition) =>
+      rowsForSameCondition.map((row) => row.temp).sort(d3.ascending),
+    (record) => record.condition,
   );
 
-  const stats = grouped
-    .map(([condition, temps]) => {
-      const q1 = d3.quantile(temps, 0.25);
-      const median = d3.quantile(temps, 0.5);
-      const q3 = d3.quantile(temps, 0.75);
+  const conditionStatsUnsorted = tempsGroupedByCondition
+    .map(([conditionLabel, sortedTempsAscending]) => {
+      const quartileLower = d3.quantile(sortedTempsAscending, 0.25);
+      const quartileMedian = d3.quantile(sortedTempsAscending, 0.5);
+      const quartileUpper = d3.quantile(sortedTempsAscending, 0.75);
       return {
-        condition,
-        temps,
-        count: temps.length,
-        min: temps[0],
-        max: temps[temps.length - 1],
-        q1,
-        median,
-        q3,
-        mean: d3.mean(temps),
+        condition: conditionLabel,
+        temps: sortedTempsAscending,
+        count: sortedTempsAscending.length,
+        min: sortedTempsAscending[0],
+        max: sortedTempsAscending[sortedTempsAscending.length - 1],
+        q1: quartileLower,
+        median: quartileMedian,
+        q3: quartileUpper,
+        mean: d3.mean(sortedTempsAscending),
       };
-    })
-    .sort((a, b) => d3.ascending(a.median, b.median));
+    });
+
+  const conditionBoxStats = sortConditionStatsForDisplay(
+    conditionStatsUnsorted,
+    sortMetricKey,
+    descending,
+  );
 
   /* ── Layout ── */
   const margin = { top: 40, right: 24, bottom: 160, left: 64 };
-  const totalW = 980;
-  const totalH = 620;
-  const W = totalW - margin.left - margin.right;
-  const H = totalH - margin.top - margin.bottom;
+  const svgOuterWidth = 980;
+  const svgOuterHeight = 620;
+  const innerPlotWidth = svgOuterWidth - margin.left - margin.right;
+  const innerPlotHeight = svgOuterHeight - margin.top - margin.bottom;
 
-  const container = d3.select("#box-condition-temp");
-  container.html("");
+  const chartRoot = d3.select("#box-condition-temp");
+  chartRoot.html("");
 
-  const svg = container
+  const svg = chartRoot
     .append("svg")
-    .attr("viewBox", `0 0 ${totalW} ${totalH}`)
+    .attr("viewBox", `0 0 ${svgOuterWidth} ${svgOuterHeight}`)
     .attr("width", "100%")
     .style("overflow", "visible");
 
-  const g = svg
+  const mainLayer = svg
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   /* ── Scales ── */
-  const x = d3
+  const xBandCondition = d3
     .scaleBand()
-    .domain(stats.map((d) => d.condition))
-    .range([0, W])
+    .domain(conditionBoxStats.map((statRow) => statRow.condition))
+    .range([0, innerPlotWidth])
     .paddingInner(0.45)
     .paddingOuter(0.25);
 
-  const allTemps = stats.flatMap((s) => [s.min, s.max]);
-  const y = d3
+  const allMinMaxTemps = conditionBoxStats.flatMap((statRow) => [
+    statRow.min,
+    statRow.max,
+  ]);
+  const yScaleTemperature = d3
     .scaleLinear()
     .domain([
-      Math.floor((d3.min(allTemps) - 1) / 5) * 5,
-      Math.ceil((d3.max(allTemps) + 1) / 5) * 5,
+      Math.floor((d3.min(allMinMaxTemps) - 1) / 5) * 5,
+      Math.ceil((d3.max(allMinMaxTemps) + 1) / 5) * 5,
     ])
-    .range([H, 0])
+    .range([innerPlotHeight, 0])
     .nice();
 
-  /* ── Column header label (top, centered like Tableau) ── */
-  g.append("text")
-    .attr("x", W / 2)
+  /* ── Column header label (top, centered) ── */
+  mainLayer
+    .append("text")
+    .attr("x", innerPlotWidth / 2)
     .attr("y", -18)
     .attr("text-anchor", "middle")
     .attr("font-size", 12)
@@ -87,21 +162,31 @@ export function drawQ8(data) {
     .text("Day.Condition.Text");
 
   /* ── Grid (horizontal) ── */
-  g.append("g")
+  mainLayer
+    .append("g")
     .attr("class", "grid")
-    .call(d3.axisLeft(y).ticks(7).tickSize(-W).tickFormat(""))
-    .call((ax) => {
-      ax.select(".domain").remove();
-      ax.selectAll("line")
+    .call(
+      d3
+        .axisLeft(yScaleTemperature)
+        .ticks(7)
+        .tickSize(-innerPlotWidth)
+        .tickFormat(""),
+    )
+    .call((axisGroup) => {
+      axisGroup.select(".domain").remove();
+      axisGroup
+        .selectAll("line")
         .attr("stroke", "#e5e7eb")
         .attr("stroke-dasharray", "3 4");
     });
 
   /* ── Axes ── */
-  g.append("g")
-    .attr("transform", `translate(0,${H})`)
-    .call(d3.axisBottom(x).tickSize(0).tickPadding(10))
-    .call((ax) => ax.select(".domain").attr("stroke", "#d1d5db"))
+  mainLayer
+    .append("g")
+    .attr("transform", `translate(0,${innerPlotHeight})`)
+    .call(d3.axisBottom(xBandCondition).tickSize(0).tickPadding(10))
+    .call((axisGroup) =>
+      axisGroup.select(".domain").attr("stroke", "#d1d5db"))
     .selectAll("text")
     .attr("font-size", 11)
     .attr("fill", "#374151")
@@ -109,19 +194,22 @@ export function drawQ8(data) {
     .attr("text-anchor", "end")
     .attr("dx", "-0.4em")
     .attr("dy", "0.5em")
-    .call(wrapTickLabel, 110);
+    .call(wrapTickLabelsOnWhitespace);
 
-  g.append("g")
-    .call(d3.axisLeft(y).ticks(7))
-    .call((ax) => ax.select(".domain").attr("stroke", "#d1d5db"))
+  mainLayer
+    .append("g")
+    .call(d3.axisLeft(yScaleTemperature).ticks(7))
+    .call((axisGroup) =>
+      axisGroup.select(".domain").attr("stroke", "#d1d5db"))
     .selectAll("text")
     .attr("font-size", 12)
     .attr("fill", "#6b7280");
 
   /* ── Y-axis label ── */
-  g.append("text")
+  mainLayer
+    .append("text")
     .attr("transform", "rotate(-90)")
-    .attr("x", -H / 2)
+    .attr("x", -innerPlotHeight / 2)
     .attr("y", -46)
     .attr("text-anchor", "middle")
     .attr("font-size", 13)
@@ -129,183 +217,216 @@ export function drawQ8(data) {
     .text("Average Temperature (°C)");
 
   /* ── Tooltip ── */
-  const tooltip = d3.select("body").select(".chart-tooltip");
-  const tt = tooltip.empty()
+  const tooltipBase = d3.select("body").select(".chart-tooltip");
+  const floatingTooltip = tooltipBase.empty()
     ? d3.select("body").append("div").attr("class", "chart-tooltip")
-    : tooltip;
+    : tooltipBase;
 
   /* ── Strip plot (faint individual day ticks behind boxes) ── */
-  const stripHalfW = Math.min(x.bandwidth() * 0.7, 14);
-  const stripJitter = d3.randomUniform(-stripHalfW, stripHalfW - 4);
+  const stripJitterHalfWidth = Math.min(
+    xBandCondition.bandwidth() * 0.7,
+    14,
+  );
+  const randomStripHorizontalOffset = d3.randomUniform(
+    -stripJitterHalfWidth,
+    stripJitterHalfWidth - 4,
+  );
 
-  const stripG = g.append("g").attr("class", "strip-layer");
-  stats.forEach((s) => {
-    const groupCx = x(s.condition) + x.bandwidth() / 2;
-    const stripData = s.temps.map((t) => ({
-      t,
-      x0: groupCx + stripJitter(),
-    }));
-    stripG
+  const stripScatterLayer = mainLayer.append("g").attr("class", "strip-layer");
+  conditionBoxStats.forEach((statRowForCondition) => {
+    const conditionCenterX =
+      xBandCondition(statRowForCondition.condition) +
+      xBandCondition.bandwidth() / 2;
+    const jitteredStripMarks = statRowForCondition.temps.map(
+      (temperatureCelsius) => ({
+        temperatureCelsius,
+        stripStartX: conditionCenterX + randomStripHorizontalOffset(),
+      }),
+    );
+    stripScatterLayer
       .append("g")
       .selectAll("line")
-      .data(stripData)
+      .data(jitteredStripMarks)
       .join("line")
-      .attr("x1", (d) => d.x0)
-      .attr("x2", (d) => d.x0 + 4)
-      .attr("y1", (d) => y(d.t))
-      .attr("y2", (d) => y(d.t))
-      .attr("stroke", STRIP)
+      .attr("x1", (stripPoint) => stripPoint.stripStartX)
+      .attr("x2", (stripPoint) => stripPoint.stripStartX + 4)
+      .attr("y1", (stripPoint) =>
+        yScaleTemperature(stripPoint.temperatureCelsius),
+      )
+      .attr("y2", (stripPoint) =>
+        yScaleTemperature(stripPoint.temperatureCelsius),
+      )
+      .attr("stroke", STRIP_STROKE)
       .attr("stroke-opacity", 0.08)
       .attr("stroke-width", 1);
   });
 
   /* ── Box groups (one per condition) ── */
-  const boxes = g
+  const boxGroups = mainLayer
     .selectAll("g.box")
-    .data(stats, (d) => d.condition)
+    .data(conditionBoxStats, (statRow) => statRow.condition)
     .join("g")
     .attr("class", "box")
-    .attr("transform", (d) => `translate(${x(d.condition)},0)`)
+    .attr(
+      "transform",
+      (statRow) =>
+        `translate(${xBandCondition(statRow.condition)},0)`,
+    )
     .style("cursor", "pointer")
-    .on("mouseenter", function (event, d) {
-      tt.style("opacity", 1).html(
-        `<strong>${d.condition}</strong><br/>
-         Số ngày: ${d.count.toLocaleString("vi-VN")}<br/>
-         Min: ${d.min.toFixed(1)} °C<br/>
-         Q1: ${d.q1.toFixed(1)} °C<br/>
-         Median: ${d.median.toFixed(1)} °C<br/>
-         Q3: ${d.q3.toFixed(1)} °C<br/>
-         Max: ${d.max.toFixed(1)} °C<br/>
-         Mean: ${d.mean.toFixed(1)} °C`,
+    .on("mouseenter", function (mouseEvent, statRow) {
+      floatingTooltip.style("opacity", 1).html(
+        `<strong>${statRow.condition}</strong><br/>
+         Số ngày: ${statRow.count.toLocaleString("vi-VN")}<br/>
+         Min: ${statRow.min.toFixed(1)} °C<br/>
+         Q1: ${statRow.q1.toFixed(1)} °C<br/>
+         Median: ${statRow.median.toFixed(1)} °C<br/>
+         Q3: ${statRow.q3.toFixed(1)} °C<br/>
+         Max: ${statRow.max.toFixed(1)} °C<br/>
+         Mean: ${statRow.mean.toFixed(1)} °C`,
       );
       d3.select(this).select(".box-upper").attr("fill", "#9dd9e3");
       d3.select(this).select(".box-lower").attr("fill", "#3b8a8f");
     })
-    .on("mousemove", (event) => {
-      tt.style("left", event.pageX + 14 + "px").style(
-        "top",
-        event.pageY - 10 + "px",
-      );
+    .on("mousemove", (mouseEvent) => {
+      floatingTooltip
+        .style("left", mouseEvent.pageX + 14 + "px")
+        .style("top", mouseEvent.pageY - 10 + "px");
     })
     .on("mouseleave", function () {
-      tt.style("opacity", 0);
+      floatingTooltip.style("opacity", 0);
       d3.select(this).select(".box-upper").attr("fill", BOX_LIGHT);
       d3.select(this).select(".box-lower").attr("fill", BOX_DARK);
     });
 
-  const bw = x.bandwidth();
-  const cx = bw / 2;
+  const bandWidth = xBandCondition.bandwidth();
+  const boxCenterX = bandWidth / 2;
 
   /* Vertical whisker line (min → max) */
-  boxes
+  boxGroups
     .append("line")
     .attr("class", "whisker-line")
-    .attr("x1", cx)
-    .attr("x2", cx)
-    .attr("y1", (d) => y(d.min))
-    .attr("y2", (d) => y(d.min))
-    .attr("stroke", WHISKER)
+    .attr("x1", boxCenterX)
+    .attr("x2", boxCenterX)
+    .attr("y1", (statRow) => yScaleTemperature(statRow.min))
+    .attr("y2", (statRow) => yScaleTemperature(statRow.min))
+    .attr("stroke", WHISKER_STROKE)
     .attr("stroke-width", 1)
     .transition()
     .duration(600)
-    .delay((_, i) => i * 22)
+    .delay((_statRow, boxIndex) => boxIndex * 22)
     .ease(d3.easeCubicOut)
-    .attr("y2", (d) => y(d.max));
+    .attr("y2", (statRow) => yScaleTemperature(statRow.max));
 
   /* Whisker caps */
-  const capW = Math.min(bw * 0.5, 18);
-  boxes
+  const whiskerCapWidth = Math.min(bandWidth * 0.5, 18);
+  boxGroups
     .append("line")
     .attr("class", "whisker-cap")
-    .attr("x1", cx - capW / 2)
-    .attr("x2", cx + capW / 2)
-    .attr("y1", (d) => y(d.min))
-    .attr("y2", (d) => y(d.min))
-    .attr("stroke", WHISKER)
+    .attr("x1", boxCenterX - whiskerCapWidth / 2)
+    .attr("x2", boxCenterX + whiskerCapWidth / 2)
+    .attr("y1", (statRow) => yScaleTemperature(statRow.min))
+    .attr("y2", (statRow) => yScaleTemperature(statRow.min))
+    .attr("stroke", WHISKER_STROKE)
     .attr("stroke-width", 1);
 
-  boxes
+  boxGroups
     .append("line")
     .attr("class", "whisker-cap")
-    .attr("x1", cx - capW / 2)
-    .attr("x2", cx + capW / 2)
-    .attr("y1", (d) => y(d.max))
-    .attr("y2", (d) => y(d.max))
-    .attr("stroke", WHISKER)
+    .attr("x1", boxCenterX - whiskerCapWidth / 2)
+    .attr("x2", boxCenterX + whiskerCapWidth / 2)
+    .attr("y1", (statRow) => yScaleTemperature(statRow.max))
+    .attr("y2", (statRow) => yScaleTemperature(statRow.max))
+    .attr("stroke", WHISKER_STROKE)
     .attr("stroke-width", 1)
     .attr("opacity", 0)
     .transition()
-    .delay((_, i) => 400 + i * 22)
+    .delay((_statRow, boxIndex) => 400 + boxIndex * 22)
     .duration(220)
     .attr("opacity", 1);
 
   /* Lower half (Q1 → median) — darker */
-  boxes
+  boxGroups
     .append("rect")
     .attr("class", "box-lower")
     .attr("x", 0)
-    .attr("width", bw)
-    .attr("y", (d) => y(d.median))
+    .attr("width", bandWidth)
+    .attr("y", (statRow) => yScaleTemperature(statRow.median))
     .attr("height", 0)
     .attr("fill", BOX_DARK)
     .attr("stroke", "white")
     .attr("stroke-width", 0.5)
     .transition()
-    .delay((_, i) => 200 + i * 22)
+    .delay((_statRow, boxIndex) => 200 + boxIndex * 22)
     .duration(500)
     .ease(d3.easeCubicOut)
-    .attr("y", (d) => y(d.median))
-    .attr("height", (d) => Math.max(0, y(d.q1) - y(d.median)));
+    .attr("y", (statRow) => yScaleTemperature(statRow.median))
+    .attr(
+      "height",
+      (statRow) =>
+        Math.max(
+          0,
+          yScaleTemperature(statRow.q1) -
+            yScaleTemperature(statRow.median),
+        ),
+    );
 
   /* Upper half (median → Q3) — lighter */
-  boxes
+  boxGroups
     .append("rect")
     .attr("class", "box-upper")
     .attr("x", 0)
-    .attr("width", bw)
-    .attr("y", (d) => y(d.median))
+    .attr("width", bandWidth)
+    .attr("y", (statRow) => yScaleTemperature(statRow.median))
     .attr("height", 0)
     .attr("fill", BOX_LIGHT)
     .attr("stroke", "white")
     .attr("stroke-width", 0.5)
     .transition()
-    .delay((_, i) => 200 + i * 22)
+    .delay((_statRow, boxIndex) => 200 + boxIndex * 22)
     .duration(500)
     .ease(d3.easeCubicOut)
-    .attr("y", (d) => y(d.q3))
-    .attr("height", (d) => Math.max(0, y(d.median) - y(d.q3)));
+    .attr("y", (statRow) => yScaleTemperature(statRow.q3))
+    .attr(
+      "height",
+      (statRow) =>
+        Math.max(
+          0,
+          yScaleTemperature(statRow.median) -
+            yScaleTemperature(statRow.q3),
+        ),
+    );
 
   /* Median tick (sits on top, between two halves) */
-  boxes
+  boxGroups
     .append("line")
     .attr("class", "median-line")
     .attr("x1", 0)
-    .attr("x2", bw)
-    .attr("y1", (d) => y(d.median))
-    .attr("y2", (d) => y(d.median))
+    .attr("x2", bandWidth)
+    .attr("y1", (statRow) => yScaleTemperature(statRow.median))
+    .attr("y2", (statRow) => yScaleTemperature(statRow.median))
     .attr("stroke", "white")
     .attr("stroke-width", 1.5);
 }
 
 /* ── Helper: wrap rotated tick label on whitespace ── */
-function wrapTickLabel(textSel, width) {
-  textSel.each(function () {
-    const text = d3.select(this);
-    const words = text.text().split(/\s+/);
-    if (words.length <= 2) return;
-    const half = Math.ceil(words.length / 2);
-    const l1 = words.slice(0, half).join(" ");
-    const l2 = words.slice(half).join(" ");
-    text.text(null);
-    text
+function wrapTickLabelsOnWhitespace(textSelection) {
+  textSelection.each(function () {
+    const tickLabelShape = d3.select(this);
+    const labelWords = tickLabelShape.text().split(/\s+/);
+    if (labelWords.length <= 2) return;
+    const midWordIndex = Math.ceil(labelWords.length / 2);
+    const firstLine = labelWords.slice(0, midWordIndex).join(" ");
+    const secondLine = labelWords.slice(midWordIndex).join(" ");
+    tickLabelShape.text(null);
+    tickLabelShape
       .append("tspan")
       .attr("x", 0)
       .attr("dy", "0em")
-      .text(l1);
-    text
+      .text(firstLine);
+    tickLabelShape
       .append("tspan")
       .attr("x", 0)
       .attr("dy", "1.1em")
-      .text(l2);
+      .text(secondLine);
   });
 }
