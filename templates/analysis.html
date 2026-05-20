@@ -1,35 +1,54 @@
-{% extends "base.html" %}
-
-{% block title %}UV & Daylight Analysis{% endblock %}
-
+{% extends "base.html" %} {% block title %}UV & Daylight Analysis{% endblock %}
 {% block content %}
 <div id="page-analysis" class="page">
   <h1 class="page-title">Phân tích thời tiết</h1>
 
   <!-- Q1 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Task 1: Phân bố nhiệt độ - sự thay đổi nhiệt độ trung bình theo thời gian</h2>
+    <h2 class="chart-section-title">
+      Task 1: Phân bố nhiệt độ - sự thay đổi nhiệt độ trung bình theo thời gian
+    </h2>
     <p class="chart-section-desc">
-      Biểu đồ Area kết hợp Line Chart. Trục X là thời gian (tháng), trục Y là nhiệt độ. Dải Area mờ biểu thị khoảng
-      Min-Max, đường Line đậm hiển thị giá trị Trung bình. Thay đổi vùng hoặc năm để xem hiệu ứng chuyển động mượt mà.
-      Hover vào điểm để xem chi tiết.
+      Biểu đồ Area kết hợp Line Chart. Trục X là thời gian (tháng), trục Y là
+      nhiệt độ. Dải Area mờ biểu thị khoảng Min-Max, đường Line đậm hiển thị giá
+      trị Trung bình. Thay đổi vùng hoặc năm để xem hiệu ứng chuyển động mượt
+      mà. Hover vào điểm để xem chi tiết.
     </p>
-    <div id="q1-controls" class="chart-controls" style="margin-bottom: 1rem; display: flex; gap: 1rem;">
+    <div
+      id="q1-controls"
+      class="chart-controls"
+      style="margin-bottom: 1rem; display: flex; gap: 1rem"
+    >
       <select id="q1-region-select" class="form-select"></select>
       <select id="q1-year-select" class="form-select"></select>
     </div>
-    <div id="trend-temp" class="chart-container" style="position: relative;"></div>
+    <div
+      id="trend-temp"
+      class="chart-container"
+      style="position: relative"
+    ></div>
   </section>
 
   <!-- Q2 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Task 2- So sánh nhiệt độ - nhiệt độ trung bình giữa các vùng</h2>
+    <h2 class="chart-section-title">
+      Task 2- So sánh nhiệt độ - nhiệt độ trung bình giữa các vùng
+    </h2>
     <p class="chart-section-desc">
-      Biểu đồ Box Plot. Trục X là các vùng miền, trục Y là nhiệt độ trung bình. Click vào một hộp để highlight các điểm
-      outlier của vùng đó.
+      Biểu đồ Box Plot. Trục X là các vùng miền, trục Y là nhiệt độ trung bình.
+      Click vào một hộp để highlight các điểm outlier của vùng đó.
     </p>
-    <div id="q2-controls" class="chart-controls"
-      style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+    <div
+      id="q2-controls"
+      class="chart-controls"
+      style="
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+      "
+    >
       <select id="q2-quarter-select" class="form-select">
         <option value="All">Tất cả các Quý</option>
         <option value="1">Quý 1</option>
@@ -37,26 +56,42 @@
         <option value="3">Quý 3</option>
         <option value="4">Quý 4</option>
       </select>
-      <label class="form-label" style="margin: 0; white-space: nowrap;">Sắp xếp theo nhiệt độ TB:</label>
+      <label class="form-label" style="margin: 0; white-space: nowrap"
+        >Sắp xếp theo nhiệt độ TB:</label
+      >
       <select id="q2-sort-select" class="form-select">
         <option value="region">Mặc định (tên vùng)</option>
         <option value="temp-asc">TB tăng dần</option>
         <option value="temp-desc">TB giảm dần</option>
       </select>
     </div>
-    <div id="box-region-temp" class="chart-container" style="position: relative;"></div>
+    <div
+      id="box-region-temp"
+      class="chart-container"
+      style="position: relative"
+    ></div>
   </section>
 
   <!-- Q3 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Task 3 –So sánh nhiệt độ, độ ẩm và lượng mưa theo vùng và quý</h2>
+    <h2 class="chart-section-title">
+      Task 3 –So sánh nhiệt độ, độ ẩm và lượng mưa theo vùng và quý
+    </h2>
     <p class="chart-section-desc">
-      Trục X là từng vùng (Đông Nam Bộ, Đồng bằng sông Cửu Long, …), trong mỗi vùng là Q1–Q4.
-      Đường nhiệt độ là chuỗi TB theo quý của đúng vùng đó; màu cột theo quý. Có lọc quý, hover/ghim vùng và chuyển động
-      khi đổi lọc.
+      Trục X là từng vùng (Đông Nam Bộ, Đồng bằng sông Cửu Long, …), trong mỗi
+      vùng là Q1–Q4. Đường nhiệt độ là chuỗi TB theo quý của đúng vùng đó; màu
+      cột theo quý. Có lọc quý, hover/ghim vùng và chuyển động khi đổi lọc.
     </p>
-    <div id="combo-region-weather" class="chart-container q3-dashboard"
-      style="position: relative; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+    <div
+      id="combo-region-weather"
+      class="chart-container q3-dashboard"
+      style="
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      "
+    ></div>
   </section>
 
   <!-- Q7 -->
@@ -64,9 +99,10 @@
   <section class="chart-section">
     <h2 class="chart-section-title">Q.5 – So sánh tỉnh ven biển & nội địa</h2>
     <p class="chart-section-desc">
-      So sánh các thuộc tính giữa các tỉnh ven biển và nội địa: độ ẩm trung bình, nhiệt độ trung bình, tầm nhìn trung
-      bình,
-      gió lớn nhất, chỉ số UV và tổng lượng mưa. Mỗi thuộc tính hiển thị một nhỏ biểu đồ cột (Coastal vs Inland).
+      So sánh các thuộc tính giữa các tỉnh ven biển và nội địa: độ ẩm trung
+      bình, nhiệt độ trung bình, tầm nhìn trung bình, gió lớn nhất, chỉ số UV và
+      tổng lượng mưa. Mỗi thuộc tính hiển thị một nhỏ biểu đồ cột (Coastal vs
+      Inland).
     </p>
     <div id="q5-coastal" class="chart-container"></div>
   </section>
@@ -75,8 +111,8 @@
   <section class="chart-section">
     <h2 class="chart-section-title">Q.6 – Mật độ điểm đo theo khu vực</h2>
     <p class="chart-section-desc">
-      Số lượng tỉnh/địa điểm (distinct `location.name`) theo từng vùng (Location.Region). Sắp xếp giảm dần để tối ưu tra
-      cứu.
+      Số lượng tỉnh/địa điểm (distinct `location.name`) theo từng vùng
+      (Location.Region). Sắp xếp giảm dần để tối ưu tra cứu.
     </p>
     <div id="q6-region-density" class="chart-container"></div>
   </section>
@@ -94,22 +130,27 @@
 
   <!-- Q8 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Q.8 – Nhiệt độ theo trạng thái thời tiết</h2>
+    <h2 class="chart-section-title">
+      Q.8 – Nhiệt độ theo trạng thái thời tiết
+    </h2>
     <p class="chart-section-desc">
       Box plot phân bố nhiệt độ trung bình (Day.Avgtemp_C) cho từng trạng thái
-      thời tiết, sắp xếp theo median tăng dần. Mỗi hộp gồm Q1–Median–Q3, râu
-      kéo tới min/max; các vạch mờ phía sau là các quan sát từng ngày. Di chuột
-      vào hộp để xem chi tiết min, Q1, median, Q3, max, mean và số ngày.
+      thời tiết, sắp xếp theo median tăng dần. Mỗi hộp gồm Q1–Median–Q3, râu kéo
+      tới min/max; các vạch mờ phía sau là các quan sát từng ngày. Di chuột vào
+      hộp để xem chi tiết min, Q1, median, Q3, max, mean và số ngày.
     </p>
     <div id="box-condition-temp" class="chart-container"></div>
   </section>
 
   <!-- Q9.1 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Q.9.1 – Nhiệt độ trung bình giữa các vùng</h2>
+    <h2 class="chart-section-title">
+      Q.9.1 – Nhiệt độ trung bình giữa các vùng
+    </h2>
     <p class="chart-section-desc">
       Trung bình nhiệt độ ngày (Day.Avgtemp_C) theo từng vùng địa lý
-      (Location.Region), sắp xếp tăng dần. Hover vào cột để xem giá trị chi tiết.
+      (Location.Region), sắp xếp tăng dần. Hover vào cột để xem giá trị chi
+      tiết.
     </p>
     <div id="bar-region-temp" class="chart-container"></div>
   </section>
@@ -138,9 +179,9 @@
   <section class="chart-section">
     <h2 class="chart-section-title">Q.10 – Chỉ số UV và Nhiệt độ trung bình</h2>
     <p class="chart-section-desc">
-      Scatter plot thể hiện mối quan hệ giữa chỉ số UV (Day.Uv) và nhiệt độ trung bình
-      ngày (Day.Avgtemp_C), phân theo vùng địa lý. Hover để xem chi tiết, click để
-      highlight một điểm.
+      Scatter plot thể hiện mối quan hệ giữa chỉ số UV (Day.Uv) và nhiệt độ
+      trung bình ngày (Day.Avgtemp_C), phân theo vùng địa lý. Hover để xem chi
+      tiết, click để highlight một điểm.
     </p>
     <div id="scatter-uv-temp" class="chart-container"></div>
   </section>
@@ -149,19 +190,22 @@
   <section class="chart-section">
     <h2 class="chart-section-title">Q.11 – Độ dài ban ngày theo thời gian</h2>
     <p class="chart-section-desc">
-      Đường cong trung bình số giờ có ánh sáng ban ngày (HourOfDayLight) qua 409 ngày,
-      nhóm theo vùng. Dùng các nút bên dưới để bật/tắt từng vùng — đường sẽ mờ dần
-      với transition mượt.
+      Đường cong trung bình số giờ có ánh sáng ban ngày (HourOfDayLight) qua 409
+      ngày, nhóm theo vùng. Dùng các nút bên dưới để bật/tắt từng vùng — đường
+      sẽ mờ dần với transition mượt.
     </p>
     <div id="line-daylight" class="chart-container"></div>
   </section>
 
   <!-- Q12 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Q.12 – Ban ngày dài có ảnh hưởng đến UV không?</h2>
+    <h2 class="chart-section-title">
+      Q.12 – Ban ngày dài có ảnh hưởng đến UV không?
+    </h2>
     <p class="chart-section-desc">
-      Scatter plot với trục X là HourOfDayLight và trục Y là Day.Uv. Từng điểm là một
-      tổ hợp (vùng, ngày). Hover để xem chi tiết, filter theo vùng để so sánh.
+      Scatter plot với trục X là HourOfDayLight và trục Y là Day.Uv. Từng điểm
+      là một tổ hợp (vùng, ngày). Hover để xem chi tiết, filter theo vùng để so
+      sánh.
     </p>
     <div id="scatter-daylight" class="chart-container"></div>
   </section>

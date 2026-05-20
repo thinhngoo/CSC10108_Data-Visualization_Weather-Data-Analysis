@@ -1,7 +1,7 @@
 // Q6 – Region density: count distinct locations per region (bar chart, sorted desc)
 // Container expected: <div id="q6-region-density"></div>
 
-export function drawQ6RegionDensity(data) {
+export function drawQ6(data) {
     const container = d3.select('#q6-region-density');
     container.selectAll('*').remove();
     if (!data || data.length === 0) return;

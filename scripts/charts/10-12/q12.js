@@ -18,7 +18,7 @@ const colorOf = (region) => COLORS[REGIONS.indexOf(region)] ?? "#888";
 
 const jitter = d3.randomNormal(0, 0.022);
 
-export function drawScatterDaylight(data) {
+export function drawQ12(data) {
   const validData = data.filter(d => d.hourOfDayLight != null && d.uv >= 2);
 
   /* ── Layout ── */

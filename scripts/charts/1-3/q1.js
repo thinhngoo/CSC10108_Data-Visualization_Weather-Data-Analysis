@@ -12,7 +12,7 @@ function tempColorScale(minT, maxT) {
   };
 }
 
-export function drawQ1Trend(data) {
+export function drawQ1(data) {
   const container = d3.select("#trend-temp");
   container.selectAll("svg").remove();
 

@@ -16,7 +16,7 @@ const REGION_SHORT = [
 const COLORS = ["#4f8ef7","#f97316","#ef4444","#22d3ee","#a855f7","#eab308"];
 const colorOf = (region) => COLORS[REGIONS.indexOf(region)] ?? "#888";
 
-export function drawLineDaylight(data) {
+export function drawQ11(data) {
   /* ── Pre-process: weekly average HourOfDayLight per region ── */
   const validData = data.filter(d => d.hourOfDayLight != null);
 

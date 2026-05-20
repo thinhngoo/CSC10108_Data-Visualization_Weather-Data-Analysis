@@ -1,4 +1,4 @@
-export function drawQ2Comparison(data) {
+export function drawQ2(data) {
   const container = d3.select("#box-region-temp");
   const quarterSelect = d3.select("#q2-quarter-select");
   const sortSelect = d3.select("#q2-sort-select");

@@ -4,24 +4,27 @@ import {
   parseForCharts,
 } from "./loaders/index.js";
 import { renderDatasetPage } from "./pages/dataset.js";
-import { drawBarCondition } from "./charts/barCondition.js";
-import { drawBoxConditionTemp } from "./charts/boxConditionTemp.js";
-import { drawRegionBars } from "./charts/regionBars.js";
-import { drawScatterUVTemp } from "./charts/scatterUVTemp.js";
-import { drawLineDaylight } from "./charts/lineDaylight.js";
-import { drawScatterDaylight } from "./charts/scatterDaylight.js";
+import { drawQ7 } from "./charts/7-9/q7.js";
+import { drawQ8 } from "./charts/7-9/q8.js";
+import { drawQ9 } from "./charts/7-9/q9.js";
+import { drawQ10 } from "./charts/10-12/q10.js";
+import { drawQ11 } from "./charts/10-12/q11.js";
+import { drawQ12 } from "./charts/10-12/q12.js";
 
-import { drawQ1Trend } from "./charts/q1Trend.js";
-import { drawQ2Comparison } from "./charts/q2Comparison.js";
-import { drawQ3MultiAttribute } from "./charts/q3MultiAttribute.js";
-import { drawQ5Coastal } from "./charts/q5Coastal.js";
-import { drawQ6RegionDensity } from "./charts/q6RegionDensity.js";
+import { drawQ1 } from "./charts/1-3/q1.js";
+import { drawQ2 } from "./charts/1-3/q2.js";
+import { drawQ3 } from "./charts/1-3/q3.js";
+import { drawQ5 } from "./charts/4-6/q5.js";
+import { drawQ6 } from "./charts/4-6/q6.js";
 
 let cachedData = null;
 
 async function loadAllData() {
   if (cachedData) return cachedData;
-  const [raw, refined] = await Promise.all([loadRawDataset(), loadRefinedDataset()]);
+  const [raw, refined] = await Promise.all([
+    loadRawDataset(),
+    loadRefinedDataset(),
+  ]);
   const chartRows = parseForCharts(refined);
   cachedData = { raw, refined, chartRows };
   return cachedData;
@@ -58,18 +61,18 @@ function renderAnalysis(data) {
   q11El.innerHTML = "";
   q12El.innerHTML = "";
 
-  if (q1El) drawQ1Trend(data);
-  if (q2El) drawQ2Comparison(data);
-  if (q3El) drawQ3MultiAttribute(data);
-  if (q5El) drawQ5Coastal(data);
-  if (q6El) drawQ6RegionDensity(data);
+  if (q1El) drawQ1(data);
+  if (q2El) drawQ2(data);
+  if (q3El) drawQ3(data);
+  if (q5El) drawQ5(data);
+  if (q6El) drawQ6(data);
 
-  drawBarCondition(data);
-  drawBoxConditionTemp(data);
-  drawRegionBars(data);
-  drawScatterUVTemp(data);
-  drawLineDaylight(data);
-  drawScatterDaylight(data);
+  drawQ7(data);
+  drawQ8(data);
+  drawQ9(data);
+  drawQ10(data);
+  drawQ11(data);
+  drawQ12(data);
 }
 
 function renderDataset(containerEl, mode, raw, refined) {

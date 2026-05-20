@@ -14,7 +14,7 @@ const SI_FORMAT = (v) => {
   return String(v);
 };
 
-export function drawRegionBars(data) {
+export function drawQ9(data) {
   const valid = data.filter(
     (d) =>
       d.region &&

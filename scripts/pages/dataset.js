@@ -1,6 +1,4 @@
-/** Max rows rendered into the DOM after filtering & sorting (full data still filtered). */
 const PREVIEW_ROWS = 200;
-
 const DEBOUNCE_MS = 180;
 
 export function renderDatasetPage(container, mode, raw, refined) {
@@ -9,7 +7,9 @@ export function renderDatasetPage(container, mode, raw, refined) {
   if (mode === "raw") {
     container.appendChild(createInteractiveTableSection("Raw Data", raw));
   } else {
-    container.appendChild(createInteractiveTableSection("Refined Data", refined));
+    container.appendChild(
+      createInteractiveTableSection("Refined Data", refined),
+    );
   }
 }
 
@@ -27,6 +27,10 @@ function createInteractiveTableSection(title, rows) {
       <span class="dataset-filter-summary"></span>
     </p>
     <div class="dataset-table-toolbar">
+      <label class="dataset-field-wrap">
+        <span class="dataset-field-label">Field</span>
+        <select class="dataset-field-select" aria-label="Column to search"></select>
+      </label>
       <label class="dataset-search-wrap">
         <span class="dataset-search-label">Search</span>
         <input
@@ -49,9 +53,14 @@ function createInteractiveTableSection(title, rows) {
   const thead = section.querySelector("thead");
   const tbody = section.querySelector("tbody");
   const summaryEl = section.querySelector(".dataset-filter-summary");
+  const fieldSelect = section.querySelector(".dataset-field-select");
   const searchInput = section.querySelector(".dataset-global-search");
   const clearBtn = section.querySelector(".dataset-clear-btn");
 
+  fieldSelect.appendChild(new Option("All columns", ""));
+  headers.forEach((h) => fieldSelect.appendChild(new Option(h, h)));
+
+  let searchField = "";
   let searchQuery = "";
   let sortColumn = null;
   let sortDir = "asc";
@@ -60,11 +69,20 @@ function createInteractiveTableSection(title, rows) {
   function rowMatchesGlobalSearch(row) {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
-    return headers.some((h) =>
-      String(row[h] ?? "")
+    const includesQ = (val) =>
+      String(val ?? "")
         .toLowerCase()
-        .includes(q),
-    );
+        .includes(q);
+    if (!searchField) {
+      return headers.some((h) => includesQ(row[h]));
+    }
+    return includesQ(row[searchField]);
+  }
+
+  function syncSearchPlaceholder() {
+    searchInput.placeholder = searchField
+      ? `Search in "${searchField}"…`
+      : "Search all columns…";
   }
 
   function buildThead() {
@@ -102,7 +120,10 @@ function createInteractiveTableSection(title, rows) {
       const ind = btn.querySelector(".dataset-sort-ind");
       if (col === sortColumn) {
         ind.textContent = sortDir === "asc" ? " ↑" : " ↓";
-        btn.setAttribute("aria-sort", sortDir === "asc" ? "ascending" : "descending");
+        btn.setAttribute(
+          "aria-sort",
+          sortDir === "asc" ? "ascending" : "descending",
+        );
       } else {
         ind.textContent = "";
         btn.removeAttribute("aria-sort");
@@ -114,7 +135,9 @@ function createInteractiveTableSection(title, rows) {
     let out = rows.filter((row) => rowMatchesGlobalSearch(row));
 
     if (sortColumn) {
-      out = [...out].sort((a, b) => compareCells(a[sortColumn], b[sortColumn], sortDir));
+      out = [...out].sort((a, b) =>
+        compareCells(a[sortColumn], b[sortColumn], sortDir),
+      );
     }
 
     const totalShown = Math.min(out.length, PREVIEW_ROWS);
@@ -127,11 +150,11 @@ function createInteractiveTableSection(title, rows) {
 
     summaryEl.textContent =
       searchQuery.trim() !== ""
-        ? ` · ${out.length} match · showing ${totalShown}`
+        ? ` · ${out.length} match · Showing ${totalShown}`
         : sortColumn != null && out.length > PREVIEW_ROWS
-          ? ` · showing ${PREVIEW_ROWS} of ${out.length}`
+          ? ` · Showing ${PREVIEW_ROWS} of ${out.length}`
           : out.length > PREVIEW_ROWS
-            ? ` · showing ${PREVIEW_ROWS} of ${out.length}`
+            ? ` · Showing ${PREVIEW_ROWS} of ${out.length}`
             : "";
     return out;
   }
@@ -153,7 +176,14 @@ function createInteractiveTableSection(title, rows) {
   }
 
   buildThead();
+  syncSearchPlaceholder();
   applyFiltersAndSort();
+
+  fieldSelect.addEventListener("change", () => {
+    searchField = fieldSelect.value;
+    syncSearchPlaceholder();
+    scheduleRebuild();
+  });
 
   thead.addEventListener("click", (e) => {
     const btn = e.target.closest(".dataset-sort-btn");

@@ -36,6 +36,7 @@ def dataset_raw():
 def dataset_refined():
     return render_template("refined.html", active_route="dataset-refined")
 
+
 @app.route("/styles/<path:path>")
 def serve_styles(path):
     return send_from_directory(ROOT / "styles", path)

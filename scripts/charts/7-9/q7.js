@@ -10,7 +10,7 @@ const SI_FORMAT = (v) => {
   return String(v);
 };
 
-export function drawBarCondition(data) {
+export function drawQ7(data) {
   /* ── Aggregate condition frequency (descending) ── */
   const counts = d3.rollups(
     data.filter((d) => d.condition && d.condition !== "Unknown"),

@@ -12,7 +12,7 @@ const REGIONS = [
 const COLORS = ["#4f8ef7","#f97316","#ef4444","#22d3ee","#a855f7","#eab308"];
 const colorOf = (region) => COLORS[REGIONS.indexOf(region)] ?? "#888";
 
-export function drawScatterUVTemp(data) {
+export function drawQ10(data) {
   /* ── Layout ── */
   const margin = { top: 24, right: 24, bottom: 56, left: 60 };
   const totalW = 860, totalH = 420;

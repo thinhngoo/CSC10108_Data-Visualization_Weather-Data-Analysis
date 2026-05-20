@@ -6,7 +6,7 @@ const BOX_LIGHT = "#b9e4ec";  // median → Q3 (upper half)
 const WHISKER = "#6b7280";
 const STRIP = "#4ea3a8";
 
-export function drawBoxConditionTemp(data) {
+export function drawQ8(data) {
   /* ── Group temps by condition & compute box stats ── */
   const grouped = d3.rollups(
     data.filter(

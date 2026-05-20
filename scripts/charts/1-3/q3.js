@@ -3,7 +3,7 @@
  * Biểu 1: dual axis — độ ẩm (trái), nhiệt độ (phải), lưới đồng bộ.
  * Lọc quý: chỉ cột; nhiệt độ = node đen. Chọn Tất cả: đường nối Q1→Q4.
  */
-export function drawQ3MultiAttribute(data) {
+export function drawQ3(data) {
   const container = d3.select("#combo-region-weather");
   container.selectAll("*").remove();
 

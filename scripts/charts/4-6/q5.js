@@ -1,7 +1,7 @@
 // Q5 – Side-by-side comparison: coastal vs inland across multiple metrics
 // Container expected: <div id="q5-coastal"></div>
 
-export function drawQ5Coastal(data) {
+export function drawQ5(data) {
     const container = d3.select("#q5-coastal");
     container.selectAll("*").remove();
     if (!data || data.length === 0) return;
