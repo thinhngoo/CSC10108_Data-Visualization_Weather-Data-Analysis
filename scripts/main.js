@@ -1,6 +1,6 @@
 import {
+  loadCleanedDataset,
   loadRawDataset,
-  loadRefinedDataset,
   parseForCharts,
 } from "./loaders/index.js";
 import { renderDatasetPage } from "./pages/dataset.js";
@@ -21,12 +21,12 @@ let cachedData = null;
 
 async function loadAllData() {
   if (cachedData) return cachedData;
-  const [raw, refined] = await Promise.all([
+  const [raw, cleaned] = await Promise.all([
     loadRawDataset(),
-    loadRefinedDataset(),
+    loadCleanedDataset(),
   ]);
-  const chartRows = parseForCharts(refined);
-  cachedData = { raw, refined, chartRows };
+  const chartRows = parseForCharts(cleaned);
+  cachedData = { raw, chartRows };
   return cachedData;
 }
 
@@ -75,33 +75,28 @@ function renderAnalysis(data) {
   drawQ12(data);
 }
 
-function renderDataset(containerEl, mode, raw, refined) {
+function renderDataset(containerEl, mode, rows) {
   if (!containerEl) return;
-  renderDatasetPage(containerEl, mode, raw, refined);
+  renderDatasetPage(containerEl, mode, rows);
 }
 
 function getRouteFromPath() {
   const path = location.pathname.replace(/\/$/, "") || "/";
   if (path === "/" || path === "/analysis") return "analysis";
   if (path === "/dataset/raw") return "dataset-raw";
-  if (path === "/dataset/refined") return "dataset-refined";
+  if (path === "/dataset/cleaning") return "dataset-cleaning";
   return "analysis";
 }
 
 async function initPage() {
   const route = getRouteFromPath();
-  const { raw, refined, chartRows } = await loadAllData();
+  const { raw, chartRows } = await loadAllData();
 
   if (route === "dataset-raw")
-    renderDataset(document.getElementById("page-dataset"), "raw", raw, refined);
+    renderDataset(document.getElementById("page-dataset"), "raw", raw);
   else if (route === "analysis") renderAnalysis(chartRows);
-  else if (route === "dataset-refined")
-    renderDataset(
-      document.getElementById("page-dataset"),
-      "refined",
-      raw,
-      refined,
-    );
+  else if (route === "dataset-cleaning")
+    renderDataset(document.getElementById("page-dataset"), "cleaning", raw);
 }
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";

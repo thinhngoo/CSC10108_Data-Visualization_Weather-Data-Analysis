@@ -2,6 +2,68 @@
   margin-bottom: 40px;
 }
 
+.dataset-cleaning-page {
+  position: relative;
+}
+
+.dataset-build-cleaned-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.dataset-build-cleaned-sticky + .cleaning-overview > .dataset-profile-section:first-child {
+  margin-top: -38px;
+}
+
+.dataset-build-cleaned-sticky .dataset-build-cleaned-btn {
+  pointer-events: auto;
+}
+
+.dataset-build-cleaned-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    opacity 0.15s,
+    filter 0.15s;
+}
+
+.dataset-build-cleaned-btn:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.dataset-build-cleaned-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.dataset-build-cleaned-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  filter: none;
+}
+
 .dataset-section h2 {
   margin: 0 0 8px 0;
   font-size: 20px;
@@ -165,4 +227,62 @@
   flex-shrink: 0;
   font-size: 12px;
   opacity: 0.85;
+}
+
+.dataset-profile-section .dataset-profile-table thead th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.dataset-profile-num-head,
+.dataset-profile-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dataset-numeric-fields .dataset-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.dataset-numeric-fields .dataset-table thead th:first-child,
+.dataset-numeric-fields .dataset-table tbody td:first-child {
+  width: 28%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.dataset-numeric-fields .dataset-table thead th:nth-child(n + 2),
+.dataset-numeric-fields .dataset-table tbody td:nth-child(n + 2) {
+  width: calc((100% - 28%) / 5);
+}
+
+.dataset-numeric-fields .dataset-profile-num-head,
+.dataset-numeric-fields .dataset-profile-num {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.cleaning-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dataset-distinct-values-cell {
+  max-width: min(560px, 90vw);
+}
+
+.dataset-distinct-values-list {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.dataset-distinct-values-list li {
+  margin: 2px 0;
+  word-break: break-word;
 }

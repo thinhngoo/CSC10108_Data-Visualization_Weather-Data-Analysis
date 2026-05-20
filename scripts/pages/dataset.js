@@ -1,15 +1,52 @@
+import { createCleaningProfileSection } from "../loaders/cleaning.js";
+
 const PREVIEW_ROWS = 200;
 const DEBOUNCE_MS = 180;
 
-export function renderDatasetPage(container, mode, raw, refined) {
+export function renderDatasetPage(container, mode, rows) {
   container.innerHTML = "";
 
   if (mode === "raw") {
-    container.appendChild(createInteractiveTableSection("Raw Data", raw));
-  } else {
-    container.appendChild(
-      createInteractiveTableSection("Refined Data", refined),
-    );
+    container.appendChild(createInteractiveTableSection("Raw Data", rows));
+  } else if (mode === "cleaning") {
+    const page = document.createElement("div");
+    page.className = "dataset-cleaning-page";
+
+    const stickyAnchor = document.createElement("div");
+    stickyAnchor.className = "dataset-build-cleaned-sticky";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dataset-build-cleaned-btn";
+    btn.textContent = "Clean dataset";
+    btn.title =
+      "Run build_cleaned.py and overwrite datasets/cleaned-dataset.csv";
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/build-cleaned", {
+          method: "POST",
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          const msg =
+            typeof data?.error === "string" ? data.error : res.statusText;
+          console.error("build-cleaned failed:", msg);
+          return;
+        }
+      } catch (err) {
+        console.error("build-cleaned request failed:", err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    stickyAnchor.appendChild(btn);
+
+    page.appendChild(stickyAnchor);
+    page.appendChild(createCleaningProfileSection(rows));
+    container.appendChild(page);
   }
 }
 

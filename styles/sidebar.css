@@ -158,6 +158,12 @@
   flex-shrink: 0;
 }
 
+/* Bootstrap Icons: match ~20px stroke SVG neighbours */
+.sidebar-icon.bi {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 /* Mobile-only floating menu trigger (sidebar is off-canvas below 1024px) */
 .navbar-menu-btn {
   display: none;
