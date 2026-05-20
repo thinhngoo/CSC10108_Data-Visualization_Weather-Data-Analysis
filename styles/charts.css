@@ -17,6 +17,48 @@
   line-height: 1.6;
 }
 
+/* Smaller intra-section heading (e.g. nested charts under Q.9). */
+.chart-subsection-heading {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 28px 0 6px 0;
+  color: var(--foreground);
+}
+
+.chart-subsection-heading:first-of-type {
+  margin-top: 0;
+}
+
+/* Q9: một thẻ .chart-container ôm cả nhóm chart (như dashboard Q3). */
+.q9-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.q9-dashboard .q9-panel {
+  width: 100%;
+}
+
+.q9-dashboard .chart-subsection-heading {
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
+.q9-dashboard .q9-panel-desc {
+  margin-bottom: 0.5rem;
+}
+
+.q9-dashboard .q9-chart-inner {
+  width: 100%;
+}
+
+.q9-controls .q9-control-label {
+  font-size: 13px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
 .chart-container {
   background: var(--card);
   border: 1px solid var(--border);

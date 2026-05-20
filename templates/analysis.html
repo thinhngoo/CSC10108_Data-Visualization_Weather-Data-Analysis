@@ -195,7 +195,11 @@
       </label>
       <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem">
         <span class="q8-control-label">Thứ tự:</span>
-        <select id="q8-sort-order" class="form-select" aria-label="Chiều sắp xếp">
+        <select
+          id="q8-sort-order"
+          class="form-select"
+          aria-label="Chiều sắp xếp"
+        >
           <option value="asc">Tăng dần</option>
           <option value="desc">Giảm dần</option>
         </select>
@@ -204,37 +208,85 @@
     <div id="box-condition-temp" class="chart-container"></div>
   </section>
 
-  <!-- Q9.1 -->
+  <!-- Q9 — temperature, humidity & precip by region -->
   <section class="chart-section">
-    <h2 class="chart-section-title">
-      Q.9.1 – Nhiệt độ trung bình giữa các vùng
-    </h2>
+    <h2 class="chart-section-title">Q.9 – So sánh thời tiết giữa các vùng</h2>
     <p class="chart-section-desc">
-      Trung bình nhiệt độ ngày (Day.Avgtemp_C) theo từng vùng địa lý
-      (Location.Region), sắp xếp tăng dần. Hover vào cột để xem giá trị chi
-      tiết.
+      Ba biểu đồ dưới đây so sánh nhiệt độ, độ ẩm và tổng lượng mưa theo vùng.
     </p>
-    <div id="bar-region-temp" class="chart-container"></div>
-  </section>
 
-  <!-- Q9.2 -->
-  <section class="chart-section">
-    <h2 class="chart-section-title">Q.9.2 – Độ ẩm trung bình giữa các vùng</h2>
-    <p class="chart-section-desc">
-      Trung bình độ ẩm ngày (Day.Avghumidity, %) theo từng vùng, sắp xếp tăng
-      dần. Thang đo cố định 0–100% để dễ so sánh.
-    </p>
-    <div id="bar-region-humidity" class="chart-container"></div>
-  </section>
+    <div
+      id="q9-controls"
+      class="chart-controls q9-controls"
+      style="
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        align-items: center;
+      "
+    >
+      <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem">
+        <span class="q9-control-label">Sắp xếp theo:</span>
+        <select
+          id="q9-sort-metric"
+          class="form-select"
+          aria-label="Thuộc tính dùng để xếp thứ tự vùng"
+        >
+          <option value="temp">Nhiệt độ TB ngày</option>
+          <option value="humidity">Độ ẩm TB ngày</option>
+          <option value="precip">Tổng lượng mưa</option>
+          <option value="none">Không đồng bộ</option>
+        </select>
+      </label>
+      <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem">
+        <span class="q9-control-label">Thứ tự:</span>
+        <select
+          id="q9-sort-order"
+          class="form-select"
+          aria-label="Chiều sắp xếp"
+        >
+          <option value="asc">Tăng dần</option>
+          <option value="desc">Giảm dần</option>
+        </select>
+      </label>
+    </div>
 
-  <!-- Q9.3 -->
-  <section class="chart-section">
-    <h2 class="chart-section-title">Q.9.3 – Tổng lượng mưa giữa các vùng</h2>
-    <p class="chart-section-desc">
-      Tổng lượng mưa toàn giai đoạn (sum of Day.Totalprecip_mm) cho mỗi vùng,
-      sắp xếp tăng dần. Giá trị được hiển thị dạng K/M trên trục Y.
-    </p>
-    <div id="bar-region-precip" class="chart-container"></div>
+    <div class="chart-container q9-dashboard" style="position: relative">
+      <div class="q9-panel">
+        <h3 class="chart-subsection-heading">
+          Nhiệt độ trung bình ngày theo vùng
+        </h3>
+        <p class="chart-section-desc q9-panel-desc">
+          Trung bình nhiệt độ ngày theo từng vùng.
+        </p>
+        <div id="bar-region-temp" class="chart-container q9-chart-inner"></div>
+      </div>
+      <div class="q9-panel">
+        <h3 class="chart-subsection-heading">
+          Độ ẩm trung bình ngày theo vùng
+        </h3>
+        <p class="chart-section-desc q9-panel-desc">
+          Trung bình độ ẩm ngày theo vùng.
+        </p>
+        <div
+          id="bar-region-humidity"
+          class="chart-container q9-chart-inner"
+        ></div>
+      </div>
+      <div class="q9-panel">
+        <h3 class="chart-subsection-heading">
+          Tổng lượng mưa toàn kỳ theo vùng
+        </h3>
+        <p class="chart-section-desc q9-panel-desc">
+          Tổng lượng mưa trên toàn bộ quan sát cho mỗi vùng.
+        </p>
+        <div
+          id="bar-region-precip"
+          class="chart-container q9-chart-inner"
+        ></div>
+      </div>
+    </div>
   </section>
 
   <!-- Q10 -->

@@ -1,18 +1,139 @@
-// Q9 – Thời tiết giữa các khu vực  (3 region-level bar charts)
-// Containers expected: <div id="bar-region-temp">, <div id="bar-region-humidity">, <div id="bar-region-precip">
+// Q9 – Thời tiết giữa các khu vực (3 region-level bar charts).
 
 const COLOR_TEMP = "#f3a85a";
-const COLOR_TEMP_HOVER = "#d88536";
 const COLOR_HUMIDITY = "#80c9b8";
-const COLOR_HUMIDITY_HOVER = "#56a594";
 const COLOR_PRECIP = "#5b85aa";
-const COLOR_PRECIP_HOVER = "#3d6890";
 
 const SI_FORMAT = (v) => {
   if (v === 0) return "0K";
   if (Math.abs(v) >= 1000) return d3.format("~s")(v).replace("G", "B");
   return String(v);
 };
+
+/** Parsed chart rows để tái render khi đổi sort (listeners gọi redraw). */
+let q9CachedRows = null;
+
+function attachQ9SortListenersOnce() {
+  const root = document.getElementById("q9-controls");
+  if (!root || root.dataset.listenersBound === "1") return;
+  root.dataset.listenersBound = "1";
+
+  const redraw = () => drawQ9FromCache();
+
+  document.getElementById("q9-sort-metric")?.addEventListener("change", redraw);
+  document.getElementById("q9-sort-order")?.addEventListener("change", redraw);
+}
+
+function readQ9SortOptions() {
+  const metricEl = document.getElementById("q9-sort-metric");
+  const orderEl = document.getElementById("q9-sort-order");
+  return {
+    metric: metricEl?.value ?? "temp",
+    ascending: (orderEl?.value ?? "asc") === "asc",
+  };
+}
+
+function syncedRegionOrder(metric, ascending, maps, regions) {
+  const sortKeyMap =
+    metric === "humidity"
+      ? maps.humidity
+      : metric === "precip"
+        ? maps.precip
+        : maps.temp;
+
+  return [...regions].sort((a, b) => {
+    const va = sortKeyMap.get(a);
+    const vb = sortKeyMap.get(b);
+    let c = ascending ? d3.ascending(va, vb) : d3.descending(va, vb);
+    if (c !== 0) return c;
+    return a.localeCompare(b, "vi");
+  });
+}
+
+function rowsSortedByOwnValues(valueMap, ascending, regions) {
+  const order = [...regions].sort((a, b) => {
+    const va = valueMap.get(a);
+    const vb = valueMap.get(b);
+    let c = ascending ? d3.ascending(va, vb) : d3.descending(va, vb);
+    if (c !== 0) return c;
+    return a.localeCompare(b, "vi");
+  });
+  return order.map((region) => ({
+    region,
+    value: valueMap.get(region),
+  }));
+}
+
+function drawQ9FromCache() {
+  if (!q9CachedRows) return;
+  const { regions, maps, precipMaxBase } = q9CachedRows;
+
+  const { metric, ascending } = readQ9SortOptions();
+
+  let avgTempRows;
+  let avgHumRows;
+  let precipRowsOrdered;
+
+  if (metric === "none") {
+    avgTempRows = rowsSortedByOwnValues(maps.temp, ascending, regions);
+    avgHumRows = rowsSortedByOwnValues(maps.humidity, ascending, regions);
+    precipRowsOrdered = rowsSortedByOwnValues(maps.precip, ascending, regions);
+  } else {
+    const regionOrder = syncedRegionOrder(metric, ascending, maps, regions);
+    avgTempRows = regionOrder.map((region) => ({
+      region,
+      value: maps.temp.get(region),
+    }));
+    avgHumRows = regionOrder.map((region) => ({
+      region,
+      value: maps.humidity.get(region),
+    }));
+    precipRowsOrdered = regionOrder.map((region) => ({
+      region,
+      value: maps.precip.get(region),
+    }));
+  }
+
+  drawRegionBar({
+    selector: "#bar-region-temp",
+    rows: avgTempRows,
+    color: COLOR_TEMP,
+    yLabel: "Average Daily Temperature (°C)",
+    valueFmt: (v) => v.toFixed(2) + " °C",
+    yTickFmt: (v) => v.toString(),
+    yDomain: [
+      0,
+      Math.ceil((d3.max(avgTempRows, (d) => d.value) + 2) / 2.5) * 2.5,
+    ],
+    height: 360,
+    yTicks: 12,
+  });
+
+  drawRegionBar({
+    selector: "#bar-region-humidity",
+    rows: avgHumRows,
+    color: COLOR_HUMIDITY,
+    yLabel: "Average Daily Humidity (%)",
+    valueFmt: (v) => v.toFixed(2) + " %",
+    yTickFmt: (v) => v.toString(),
+    yDomain: [0, 100],
+    height: 340,
+    yTicks: 10,
+  });
+
+  drawRegionBar({
+    selector: "#bar-region-precip",
+    rows: precipRowsOrdered,
+    color: COLOR_PRECIP,
+    yLabel: "Total Daily Precipitation (mm)",
+    valueFmt: (v) =>
+      v.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " mm",
+    yTickFmt: SI_FORMAT,
+    yDomain: [0, Math.ceil(precipMaxBase / 10000) * 10000],
+    height: 340,
+    yTicks: 5,
+  });
+}
 
 export function drawQ9(data) {
   const valid = data.filter(
@@ -23,75 +144,48 @@ export function drawQ9(data) {
       Number.isFinite(d.precip),
   );
 
-  /* ── 9.1 – Avg daily temperature per region ── */
   const avgTemp = d3
     .rollups(
       valid,
       (v) => d3.mean(v, (d) => d.temp),
       (d) => d.region,
     )
-    .map(([region, value]) => ({ region, value }))
-    .sort((a, b) => d3.ascending(a.value, b.value));
+    .map(([region, value]) => ({ region, value }));
 
-  drawRegionBar({
-    selector: "#bar-region-temp",
-    rows: avgTemp,
-    color: COLOR_TEMP,
-    colorHover: COLOR_TEMP_HOVER,
-    yLabel: "Average Daily Temperature (°C)",
-    valueFmt: (v) => v.toFixed(2) + " °C",
-    yTickFmt: (v) => v.toString(),
-    yDomain: [0, Math.ceil((d3.max(avgTemp, (d) => d.value) + 2) / 2.5) * 2.5],
-    height: 360,
-    yTicks: 12,
-  });
-
-  /* ── 9.2 – Avg daily humidity per region ── */
   const avgHum = d3
     .rollups(
       valid,
       (v) => d3.mean(v, (d) => d.humidity),
       (d) => d.region,
     )
-    .map(([region, value]) => ({ region, value }))
-    .sort((a, b) => d3.ascending(a.value, b.value));
+    .map(([region, value]) => ({ region, value }));
 
-  drawRegionBar({
-    selector: "#bar-region-humidity",
-    rows: avgHum,
-    color: COLOR_HUMIDITY,
-    colorHover: COLOR_HUMIDITY_HOVER,
-    yLabel: "Average Daily Humidity (%)",
-    valueFmt: (v) => v.toFixed(2) + " %",
-    yTickFmt: (v) => v.toString(),
-    yDomain: [0, 100],
-    height: 340,
-    yTicks: 10,
-  });
-
-  /* ── 9.3 – Total daily precipitation per region ── */
   const sumPrecip = d3
     .rollups(
       valid,
       (v) => d3.sum(v, (d) => d.precip),
       (d) => d.region,
     )
-    .map(([region, value]) => ({ region, value }))
-    .sort((a, b) => d3.ascending(a.value, b.value));
+    .map(([region, value]) => ({ region, value }));
 
-  const precipMax = d3.max(sumPrecip, (d) => d.value) ?? 0;
-  drawRegionBar({
-    selector: "#bar-region-precip",
-    rows: sumPrecip,
-    color: COLOR_PRECIP,
-    colorHover: COLOR_PRECIP_HOVER,
-    yLabel: "Total Daily Precipitation (mm)",
-    valueFmt: (v) => v.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " mm",
-    yTickFmt: SI_FORMAT,
-    yDomain: [0, Math.ceil(precipMax / 10000) * 10000],
-    height: 340,
-    yTicks: 5,
-  });
+  const tm = new Map(avgTemp.map((d) => [d.region, d.value]));
+  const hm = new Map(avgHum.map((d) => [d.region, d.value]));
+  const pm = new Map(sumPrecip.map((d) => [d.region, d.value]));
+
+  const regions = [...new Set([...tm.keys(), ...hm.keys(), ...pm.keys()])].sort(
+    (a, b) => a.localeCompare(b, "vi"),
+  );
+
+  const precipMaxBase = d3.max(sumPrecip, (d) => d.value) ?? 0;
+
+  q9CachedRows = {
+    regions,
+    maps: { temp: tm, humidity: hm, precip: pm },
+    precipMaxBase,
+  };
+
+  attachQ9SortListenersOnce();
+  drawQ9FromCache();
 }
 
 /* ─────────────────────────────────────────────────────────── */
@@ -100,7 +194,6 @@ function drawRegionBar({
   selector,
   rows,
   color,
-  colorHover,
   yLabel,
   valueFmt,
   yTickFmt,
@@ -112,7 +205,8 @@ function drawRegionBar({
   container.html("");
 
   /* ── Layout ── */
-  const margin = { top: 36, right: 16, bottom: 70, left: 64 };
+  /* Top: room for “Location.Region”. Bottom: wrapped region names must clear x-axis tickPadding */
+  const margin = { top: 50, right: 16, bottom: 88, left: 64 };
   const totalW = 920;
   const totalH = height;
   const W = totalW - margin.left - margin.right;
@@ -160,14 +254,17 @@ function drawRegionBar({
     });
 
   /* ── Axes ── */
+  const xTickPad = 20;
   g.append("g")
     .attr("transform", `translate(0,${H})`)
-    .call(d3.axisBottom(x).tickSize(0).tickPadding(8))
+    .call(d3.axisBottom(x).tickSize(0).tickPadding(xTickPad))
     .call((ax) => ax.select(".domain").attr("stroke", "#d1d5db"))
     .selectAll("text")
     .attr("font-size", 11)
     .attr("fill", "#374151")
-    .call(wrapTickLabel, x.bandwidth() + 14);
+    .call(wrapTickLabel, x.bandwidth() + 14)
+    /* Extra gap: axis pushes baseline; multi-line tspans still sit visually tight without this */
+    .attr("dy", "1em");
 
   g.append("g")
     .call(d3.axisLeft(y).ticks(yTicks).tickFormat(yTickFmt))
@@ -186,11 +283,8 @@ function drawRegionBar({
     .attr("fill", "#374151")
     .text(yLabel);
 
-  /* ── Tooltip ── */
-  const tooltip = d3.select("body").select(".chart-tooltip");
-  const tt = tooltip.empty()
-    ? d3.select("body").append("div").attr("class", "chart-tooltip")
-    : tooltip;
+  const barDur = 650;
+  const barDelay = (_, i) => i * 60;
 
   /* ── Bars (grow-up transition) ── */
   g.selectAll("rect.bar")
@@ -203,30 +297,32 @@ function drawRegionBar({
     .attr("height", 0)
     .attr("fill", color)
     .attr("rx", 2)
-    .style("cursor", "pointer")
-    .on("mouseenter", function (event, d) {
-      tt.style("opacity", 1).html(
-        `<strong>${d.region}</strong><br/>
-         ${yLabel}: ${valueFmt(d.value)}`,
-      );
-      d3.select(this).transition().duration(120).attr("fill", colorHover);
-    })
-    .on("mousemove", (event) => {
-      tt.style("left", event.pageX + 14 + "px").style(
-        "top",
-        event.pageY - 10 + "px",
-      );
-    })
-    .on("mouseleave", function () {
-      tt.style("opacity", 0);
-      d3.select(this).transition().duration(120).attr("fill", color);
-    })
     .transition()
-    .duration(650)
-    .delay((_, i) => i * 60)
+    .duration(barDur)
+    .delay(barDelay)
     .ease(d3.easeCubicOut)
     .attr("y", (d) => y(d.value))
     .attr("height", (d) => H - y(d.value));
+
+  /* ── Values above bars (replacing tooltip) ── */
+  g.selectAll("text.bar-value")
+    .data(rows, (d) => d.region)
+    .join("text")
+    .attr("class", "bar-value")
+    .attr("pointer-events", "none")
+    .attr("text-anchor", "middle")
+    .attr("dominant-baseline", "alphabetic")
+    .attr("font-size", 10)
+    .attr("font-weight", 600)
+    .attr("fill", "#374151")
+    .attr("x", (d) => x(d.region) + x.bandwidth() / 2)
+    .attr("y", H)
+    .text((d) => valueFmt(d.value))
+    .transition()
+    .duration(barDur)
+    .delay(barDelay)
+    .ease(d3.easeCubicOut)
+    .attr("y", (d) => y(d.value) - 6);
 }
 
 /* ─────────────────────────────────────────────────────────── */
@@ -261,15 +357,7 @@ function wrapTickLabel(textSel, width) {
     const line2 = words.slice(bestSplit).join(" ");
 
     text.text(null);
-    text
-      .append("tspan")
-      .attr("x", 0)
-      .attr("dy", "0em")
-      .text(line1);
-    text
-      .append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.1em")
-      .text(line2);
+    text.append("tspan").attr("x", 0).attr("dy", "0em").text(line1);
+    text.append("tspan").attr("x", 0).attr("dy", "1.1em").text(line2);
   });
 }
