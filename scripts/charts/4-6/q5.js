@@ -1,199 +1,182 @@
-// Q5 – Side-by-side comparison: coastal vs inland across multiple metrics
-// Container expected: <div id="q5-coastal"></div>
+// Improved split violin: vertical value axis, mirrored densities, jittered points and tooltip
+export function drawQ5(rows) {
+  try {
+    console.log('drawQ5 called', Array.isArray(rows) ? rows.length : typeof rows);
+    const containerId = "q5-violin";
+    const container = d3.select(`#${containerId}`);
+    if (container.empty()) return;
 
-export function drawQ5(data) {
-    const container = d3.select("#q5-coastal");
-    container.selectAll("*").remove();
-    if (!data || data.length === 0) return;
-    // classify locations: coastal if terrain contains 'ven biển'
-    const isCoastal = (d) => (String(d.terrain || "").toLowerCase().includes("ven biển") ? "Coastal" : "Inland");
+    const metricSelect = d3.select("#q5-metric-select");
+    if (!metricSelect.empty() && !metricSelect.node().__onchange_registered) {
+      metricSelect.on("change", () => {
+        drawQ5(rows);
+      });
+      metricSelect.node().__onchange_registered = true;
+    }
+    const metricKey = metricSelect.empty() ? "temp" : metricSelect.node().value;
+    const metricLabels = {
+      temp: "Avg Temp (°C)",
+      humidity: "Avg Humidity (%)",
+      precip: "Precipitation (mm)",
+      maxwind: "Max Wind (kph)",
+    };
+    const metricLabel = metricLabels[metricKey] || metricKey;
 
-    // metrics to compare
-    const metrics = [
-        { key: "humidity", label: "Avg Humidity (%)", fmt: (v) => v.toFixed(1) },
-        { key: "temp", label: "Avg Temp (°C)", fmt: (v) => v.toFixed(1) },
-        { key: "avgvis", label: "Avg Vis (km)", fmt: (v) => v.toFixed(1) },
-        { key: "maxwind", label: "Max Wind (kph)", fmt: (v) => v.toFixed(1) },
-        { key: "uv", label: "UV Index", fmt: (v) => v.toFixed(1) },
-        { key: "precip", label: "Total Precip (mm)", fmt: (v) => v.toFixed(1) },
-    ];
+    const data = rows.filter((d) => d && d.terrain && Number.isFinite(d[metricKey]));
+    const groupFor = (d) => (String(d.terrain).toLowerCase().includes("ven biển") ? "Coastal" : "Inland");
+    const groups = ["Coastal", "Inland"];
 
-    // (quarter filter removed) — draw using full dataset by default
-
-    const width = Math.max(760, container.node().getBoundingClientRect().width || 900);
-    const height = 360;
-    const margin = { top: 28, right: 16, bottom: 68, left: 44 };
+    const margin = { top: 28, right: 20, bottom: 48, left: 64 };
+    const width = Math.max(680, container.node().getBoundingClientRect().width || 900);
+    const height = 480;
+    let svg = container.select("svg");
+    let g;
+    const isInit = svg.empty();
+    if (isInit) {
+      svg = container.append("svg").attr("viewBox", `0 0 ${width} ${height}`).attr("width", "100%");
+      g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    } else {
+      g = svg.select("g");
+      svg.attr("viewBox", `0 0 ${width} ${height}`);
+      g.attr("transform", `translate(${margin.left},${margin.top})`);
+    }
     const innerW = width - margin.left - margin.right;
     const innerH = height - margin.top - margin.bottom;
 
-    const svg = container.append("svg").attr("viewBox", `0 0 ${width} ${height}`).attr("width", "100%");
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    // group centers
+    const x = d3.scalePoint().domain(groups).range([innerW * 0.25, innerW * 0.75]);
 
-    const panelW = innerW / metrics.length;
-    const color = d3.scaleOrdinal().domain(["Coastal", "Inland"]).range(["#2563eb", "#ef4444"]);
+    // y scale from metric values
+    const allVals = data.map((d) => d[metricKey]);
+    const y = d3.scaleLinear().domain([d3.min(allVals), d3.max(allVals)]).nice().range([innerH, 0]);
 
-    const tooltip = d3.select("body").select(".chart-tooltip");
-    const tt = tooltip.empty() ? d3.select("body").append("div").attr("class", "chart-tooltip") : tooltip;
-
-    function monthToQuarter(m) {
-        return Math.floor(m / 3) + 1;
+    // KDE helpers
+    function kernelEpanechnikov(bandwidth) {
+      return function (u) {
+        u = u / bandwidth;
+        return Math.abs(u) <= 1 ? 0.75 * (1 - u * u) / bandwidth : 0;
+      };
     }
-
-    function computeStats(q) {
-        let rows = data.filter((d) => Number.isFinite(d.temp));
-        if (q && q !== "all") {
-            rows = rows.filter((d) => d.date && monthToQuarter(d.date.getMonth()) === +q);
-        }
-        const grouped = d3.groups(rows, (d) => isCoastal(d));
-        const stats = new Map();
-        grouped.forEach(([group, rws]) => {
-            const m = {};
-            metrics.forEach((mt) => {
-                m[mt.key] = d3.mean(rws, (r) => r[mt.key]);
-            });
-            stats.set(group, m);
+    function kernelDensityEstimator(kernel, X) {
+      return function (V) {
+        return X.map(function (x) {
+          return [x, d3.mean(V, function (v) {
+            return kernel(x - v);
+          }) || 0];
         });
-        return stats;
+      };
     }
 
-    // containers per metric for updates
-    const panels = [];
+    const DENSITY_STEPS = 30; // fewer steps -> cheaper KDE and path interpolation
+    const densityY = d3.range(y.domain()[0], y.domain()[1] + 1e-9, (y.domain()[1] - y.domain()[0]) / Math.max(1, DENSITY_STEPS - 1));
 
-    // initial draw setup (panels with empty bars)
-    const initStats = computeStats("all");
-    const groups = ["Coastal", "Inland"].filter((g) => initStats.has(g));
-
-    // optional y axis group reference for first panel
-    let firstYAxisG = null;
-
-    metrics.forEach((mt, i) => {
-        const x0 = i * panelW;
-        const panelG = g.append("g").attr("transform", `translate(${x0},0)`);
-
-        const vals = groups.map((g) => initStats.get(g)[mt.key]).filter((v) => v != null && !Number.isNaN(v));
-        const ymax = d3.max(vals) ?? 1;
-        const y = d3.scaleLinear().domain([0, ymax * 1.15]).range([innerH, 0]).nice();
-        const x = d3.scaleBand().domain(groups).range([0, panelW - 10]).padding(0.25);
-
-        if (i === 0) {
-            panelG.append("g").attr("class", "y-axis").call(d3.axisLeft(y).ticks(5)).selectAll("text").attr("font-size", 11);
-        } else {
-            // placeholder axis group for layout; do not render left axis on other panels
-            panelG.append("g").attr("class", "y-axis");
-        }
-
-        panelG
-            .append("text")
-            .attr("x", (panelW - 10) / 2)
-            .attr("y", -8)
-            .attr("text-anchor", "middle")
-            .attr("font-size", 12)
-            .attr("font-weight", 600)
-            .text(mt.label);
-
-        const bars = panelG
-            .selectAll("rect")
-            .data(groups)
-            .join("rect")
-            .attr("x", (d) => x(d))
-            .attr("width", x.bandwidth())
-            .attr("y", innerH)
-            .attr("height", 0)
-            .attr("fill", (d) => color(d))
-            .style("cursor", "pointer")
-            .on("mouseenter", function (event, d) {
-                const v = initStats.get(d)[mt.key];
-                tt.style("opacity", 1).html(`<strong>${d}</strong><br/>${mt.label}: ${mt.fmt(v)}`);
-                d3.select(this).transition().duration(120).attr("opacity", 0.85);
-            })
-            .on("mousemove", (event) => tt.style("left", event.pageX + 12 + "px").style("top", event.pageY - 28 + "px"))
-            .on("mouseleave", function () {
-                tt.style("opacity", 0);
-                d3.select(this).transition().duration(120).attr("opacity", 1);
-            });
-
-        const valsText = panelG
-            .selectAll("text.val")
-            .data(groups)
-            .join("text")
-            .attr("class", "val")
-            .attr("x", (d) => x(d) + x.bandwidth() / 2)
-            .attr("y", innerH)
-            .attr("text-anchor", "middle")
-            .attr("font-size", 11)
-            .attr("fill", "#374151")
-            .text((d) => {
-                const v = initStats.get(d)[mt.key];
-                return v != null && !Number.isNaN(v) ? mt.fmt(v) : "";
-            });
-
-        panels.push({ mt, panelG, x, y, bars, valsText });
+    // compute densities per group
+    const densities = new Map();
+    groups.forEach((gname) => {
+      const vals = data.filter((d) => groupFor(d) === gname).map((d) => d[metricKey]);
+      if (vals.length === 0) {
+        densities.set(gname, []);
+        return;
+      }
+      const bw = (d3.max(vals) - d3.min(vals)) / Math.sqrt(vals.length) || (y.domain()[1] - y.domain()[0]) / 20;
+      const kde = kernelDensityEstimator(kernelEpanechnikov(bw), densityY);
+      const dens = kde(vals);
+      densities.set(gname, dens);
     });
+
+    // width scale for violin (density -> px)
+    const maxDensity = d3.max(Array.from(densities.values()).flatMap((d) => d.map((p) => p[1]))) || 0.0001;
+    const maxViolinWidth = Math.min(120, innerW * 0.18);
+    const widthScale = d3.scaleLinear().domain([0, maxDensity]).range([0, maxViolinWidth]);
+
+    // single y-axis on the left
+    const yAxisG = g.selectAll(".y-axis").data([0]).join("g").attr("class", "y-axis");
+    yAxisG.call(d3.axisLeft(y)).selectAll("text").attr("font-size", 11);
+
+    // center line labels
+    g.selectAll(".group-label").data(groups).join("text").attr("class", "group-label").attr("x", (d) => x(d)).attr("y", innerH + 32).attr("text-anchor", "middle").text((d) => d).attr("font-weight", 700);
+
+    // tooltip
+    const ttSel = d3.select("body").selectAll(".chart-tooltip").data([0]);
+    const tt = ttSel.enter().append("div").attr("class", "chart-tooltip").merge(ttSel).style("position", "absolute").style("pointer-events", "none").style("opacity", 0).style("background", "white").style("border", "1px solid #ddd").style("padding", "6px").style("font-size", "12px");
+
+    const TRANS_DUR = 1200;
+    const TRANS_EASE = d3.easeCubic;
+    const MAX_POINTS_PER_GROUP = 200; // cap rendered points per group to reduce DOM pressure
+
+    // draw / update violins
+    groups.forEach((gname, i) => {
+      const dens = densities.get(gname) || [];
+      if (!dens.length) return;
+      const area = d3.area()
+        .x0((d) => x(gname) - widthScale(d[1]))
+        .x1((d) => x(gname) + widthScale(d[1]))
+        .y((d) => y(d[0]))
+        .curve(d3.curveCatmullRom);
+
+      // group container for this violin
+      let groupG = g.select(`g.violin-group[data-name='${gname}']`);
+      if (groupG.empty()) groupG = g.append("g").attr("class", "violin-group").attr("data-name", gname);
+
+      // violin path join (use numeric interpolation of density arrays for better perf)
+      const pathSel = groupG.selectAll("path.violin").data([dens]);
+      pathSel.join(
+        (enter) => enter.append("path").attr("class", "violin").attr("d", area).attr("fill", gname === "Coastal" ? "#2563eb" : "#ef4444").attr("stroke", "#111827").attr("stroke-width", 0.5).attr("opacity", 0).call((s) => s.transition().duration(TRANS_DUR).ease(TRANS_EASE).attr("opacity", 0.75)).each(function (d) { this.__prevDensityArr = d.map(p => p[1]); }),
+        (update) => update.transition().duration(TRANS_DUR).ease(TRANS_EASE).attrTween("d", function (nextD) {
+          const prevArr = this.__prevDensityArr || nextD.map(p => p[1]);
+          const nextArr = nextD.map(p => p[1]);
+          const interp = d3.interpolateArray(prevArr, nextArr);
+          this.__prevDensityArr = nextArr;
+          return (t) => {
+            const arr = interp(t);
+            const densInterp = nextD.map((p, i) => [p[0], arr[i]]);
+            return area(densInterp);
+          };
+        }).attr("fill", gname === "Coastal" ? "#2563eb" : "#ef4444"),
+        (exit) => exit.transition().duration(400).attr("opacity", 0).remove()
+      );
+
+      // (raw points removed for clarity and performance)
+
+      // median line
+      const valsFor = data.filter((d) => groupFor(d) === gname).map((d) => d[metricKey]);
+      if (valsFor.length) {
+        const med = d3.median(valsFor);
+        const medLineSel = groupG.selectAll("line.median").data([med]);
+        medLineSel.join(
+          (enter) => enter.append("line").attr("class", "median").attr("x1", x(gname) - Math.min(maxViolinWidth, widthScale(d3.max(dens, (d) => d[1])))).attr("x2", x(gname) + Math.min(maxViolinWidth, widthScale(d3.max(dens, (d) => d[1])))).attr("y1", y(med)).attr("y2", y(med)).attr("stroke", "#111827").attr("stroke-width", 2).attr("stroke-dasharray", "3 2").attr("opacity", 0).call((s) => s.transition().duration(TRANS_DUR).ease(TRANS_EASE).attr("opacity", 1)),
+          (update) => update.transition().duration(TRANS_DUR).ease(TRANS_EASE).attrTween("y1", function (n) { const prev = +this.getAttribute('y1') || y(n); const next = y(n); return t => prev + (next - prev) * t; }).attrTween("y2", function (n) { const prev = +this.getAttribute('y2') || y(n); const next = y(n); return t => prev + (next - prev) * t; }).attr("x1", x(gname) - Math.min(maxViolinWidth, widthScale(d3.max(dens, (d) => d[1])))).attr("x2", x(gname) + Math.min(maxViolinWidth, widthScale(d3.max(dens, (d) => d[1])))).attr("opacity", 1),
+          (exit) => exit.transition().duration(300).attr("opacity", 0).remove()
+        );
+      }
+    });
+
+    // y-axis title
+    const yTitle = g.selectAll(".y-title").data([metricLabel]);
+    yTitle.join(
+      (enter) => enter.append("text").attr("class", "y-title").attr("x", -margin.left + 12).attr("y", -8).attr("text-anchor", "start").attr("font-size", 13).attr("font-weight", 700).text(metricLabel),
+      (update) => update.text(metricLabel)
+    );
 
     // legend
-    const legend = g.append("g").attr("transform", `translate(${innerW - 160},${-2})`);
-    groups.forEach((gname, i) => {
-        const row = legend.append("g").attr("transform", `translate(0, ${i * 18})`);
-        row.append("rect").attr("width", 12).attr("height", 12).attr("fill", color(gname));
-        row.append("text").attr("x", 18).attr("y", 10).attr("font-size", 12).text(gname);
-    });
+    const legend = g.selectAll(".legend").data([0]).join("g").attr("class", "legend").attr("transform", `translate(${innerW - 140}, -6)`);
+    const legendItems = [{ k: 'Coastal', c: '#2563eb' }, { k: 'Inland', c: '#ef4444' }];
+    const itemSel = legend.selectAll('g.item').data(legendItems);
+    itemSel.join(
+      (enter) => {
+        const row = enter.append('g').attr('class', 'item').attr('transform', (d, i) => `translate(0, ${i * 18})`);
+        row.append('rect').attr('width', 12).attr('height', 12).attr('fill', (d) => d.c);
+        row.append('text').attr('x', 18).attr('y', 10).text((d) => d.k).attr('font-size', 12);
+        return row;
+      },
+      (update) => update.attr('transform', (d, i) => `translate(0, ${i * 18})`).select('text').text((d) => d.k),
+      (exit) => exit.remove()
+    );
 
-    function updateForQuarter(q) {
-        const stats = computeStats(q);
-        const groupsNow = ["Coastal", "Inland"].filter((g) => stats.has(g));
-
-        panels.forEach((p, i) => {
-            const mt = p.mt;
-            const panelG = p.panelG;
-            const x = p.x;
-            const y = p.y;
-
-            const vals = groupsNow.map((g) => stats.get(g)[mt.key]).filter((v) => v != null && !Number.isNaN(v));
-            const ymax = d3.max(vals) ?? 1;
-            y.domain([0, ymax * 1.15]).nice();
-
-            // update axis for first panel only
-            if (i === 0) {
-                panelG.select('.y-axis').transition().duration(600).call(d3.axisLeft(y).ticks(5)).selectAll('text').attr('font-size', 11);
-            }
-
-            // update bars
-            // update x domain to current groups
-            x.domain(groupsNow);
-
-            const bars = panelG.selectAll('rect').data(groupsNow);
-            bars.join(
-                (enter) => enter.append('rect').attr('x', (d) => x(d)).attr('width', x.bandwidth()).attr('y', innerH).attr('height', 0).attr('fill', (d) => color(d)).style('cursor', 'pointer'),
-                (update) => update,
-                (exit) => exit.remove(),
-            )
-                .on('mouseenter', function (event, d) {
-                    const v = stats.get(d)[mt.key];
-                    tt.style('opacity', 1).html(`<strong>${d}</strong><br/>${mt.label}: ${mt.fmt(v)}`);
-                    d3.select(this).transition().duration(120).attr('opacity', 0.85);
-                })
-                .on('mousemove', (event) => tt.style('left', event.pageX + 12 + 'px').style('top', event.pageY - 28 + 'px'))
-                .on('mouseleave', function () {
-                    tt.style('opacity', 0);
-                    d3.select(this).transition().duration(120).attr('opacity', 1);
-                })
-                .transition()
-                .duration(600)
-                .attr('x', (d) => x(d))
-                .attr('width', x.bandwidth())
-                .attr('y', (d) => y(stats.get(d)[mt.key] ?? 0))
-                .attr('height', (d) => Math.max(0, innerH - y(stats.get(d)[mt.key] ?? 0)));
-
-            // update labels
-            const valsText = panelG.selectAll('text.val').data(groupsNow);
-            valsText.join('text').attr('class', 'val').attr('x', (d) => x(d) + x.bandwidth() / 2).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', '#374151')
-                .transition().duration(600).attr('y', (d) => y(stats.get(d)[mt.key] ?? 0) - 6).text((d) => {
-                    const v = stats.get(d)[mt.key];
-                    return v != null && !Number.isNaN(v) ? mt.fmt(v) : '';
-                });
-        });
-    }
-
-    // initial transition (draw with full data)
-    updateForQuarter('all');
+    // update y axis if already present
+    yAxisG.transition().duration(TRANS_DUR).ease(TRANS_EASE).call(d3.axisLeft(y)).selectAll("text").attr("font-size", 11);
+  } catch (err) {
+    console.error('drawQ5 error', err && err.message ? err.message : err);
+    throw err;
+  }
 }

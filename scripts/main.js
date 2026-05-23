@@ -14,8 +14,9 @@ import { drawQ12 } from "./charts/10-12/q12.js";
 import { drawQ1 } from "./charts/1-3/q1.js";
 import { drawQ2 } from "./charts/1-3/q2.js";
 import { drawQ3 } from "./charts/1-3/q3.js";
+import { drawQ4Heatmap } from "./charts/4-6/q4.js";
 import { drawQ5 } from "./charts/4-6/q5.js";
-import { drawQ6 } from "./charts/4-6/q6.js";
+import { drawQ6RegionDensity } from "./charts/4-6/q6.js";
 
 let cachedData = null;
 
@@ -34,7 +35,8 @@ function renderAnalysis(data) {
   const q1El = document.getElementById("trend-temp");
   const q2El = document.getElementById("box-region-temp");
   const q3El = document.getElementById("combo-region-weather");
-  const q5El = document.getElementById("q5-coastal");
+  const q4El = document.getElementById("q4-heatmap");
+  const q5El = document.getElementById("q5-violin");
   const q6El = document.getElementById("q6-region-density");
   const q7El = document.getElementById("bar-condition");
   const q8El = document.getElementById("box-condition-temp");
@@ -50,6 +52,7 @@ function renderAnalysis(data) {
   if (q1El) q1El.innerHTML = "";
   if (q2El) q2El.innerHTML = "";
   if (q3El) q3El.innerHTML = "";
+  if (q4El) q4El.innerHTML = "";
   if (q5El) q5El.innerHTML = "";
   if (q6El) q6El.innerHTML = "";
   q7El.innerHTML = "";
@@ -64,8 +67,9 @@ function renderAnalysis(data) {
   if (q1El) drawQ1(data);
   if (q2El) drawQ2(data);
   if (q3El) drawQ3(data);
+  if (q4El) drawQ4Heatmap(data);
   if (q5El) drawQ5(data);
-  if (q6El) drawQ6(data);
+  if (q6El) drawQ6RegionDensity(data);
 
   drawQ7(data);
   drawQ8(data);

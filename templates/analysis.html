@@ -94,17 +94,41 @@
     ></div>
   </section>
 
-  <!-- Q7 -->
+  <!-- Q4 -->
+  <section class="chart-section">
+    <h2 class="chart-section-title">Q.4 – Bản đồ nhiệt độ Việt Nam</h2>
+    <p class="chart-section-desc">
+      Bản đồ nhiệt độ địa lý của Việt Nam thể hiện nhiệt độ trung bình của các tỉnh thành theo thời gian.
+      Kéo thanh trượt hoặc nhấn nút mũi tên để thay đổi tháng. Sử dụng tính năng Zoom (cuộn chuột) và di chuyển (kéo chuột) để phóng to/thu nhỏ vùng bản đồ mong muốn. Hover vào điểm đo để xem chi tiết.
+    </p>
+    <div id="q4-heatmap" class="chart-container" style="position: relative;"></div>
+  </section>
+
   <!-- Q5 -->
   <section class="chart-section">
-    <h2 class="chart-section-title">Q.5 – So sánh tỉnh ven biển & nội địa</h2>
+    <h2 class="chart-section-title">Q.5 – Phân bố thuộc tính thời tiết ven biển & nội địa</h2>
     <p class="chart-section-desc">
-      So sánh các thuộc tính giữa các tỉnh ven biển và nội địa: độ ẩm trung
-      bình, nhiệt độ trung bình, tầm nhìn trung bình, gió lớn nhất, chỉ số UV và
-      tổng lượng mưa. Mỗi thuộc tính hiển thị một nhỏ biểu đồ cột (Coastal vs
-      Inland).
+      So sánh phân bố thuộc tính thời tiết (Nhiệt độ, Độ ẩm, Lượng mưa, Tốc độ gió) giữa các tỉnh ven biển và nội địa bằng biểu đồ Violin. Sử dụng bộ lọc bên dưới để chọn thuộc tính cần phân tích.
     </p>
-    <div id="q5-coastal" class="chart-container"></div>
+    <div
+      id="q5-controls"
+      class="chart-controls"
+      style="
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+      "
+    >
+      <select id="q5-metric-select" class="form-select">
+        <option value="temp">Nhiệt độ TB (°C)</option>
+        <option value="humidity">Độ ẩm TB (%)</option>
+        <option value="precip">Lượng mưa (mm)</option>
+        <option value="maxwind">Tốc độ gió tối đa (kph)</option>
+      </select>
+    </div>
+    <div id="q5-violin" class="chart-container"></div>
   </section>
 
   <!-- Q6 -->

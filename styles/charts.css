@@ -126,3 +126,83 @@
 .grid path {
   display: none;
 }
+
+/* Q4 Heatmap Slider & Control Styles */
+.q4-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--muted);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  font-family: inherit;
+}
+
+.q4-slider-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.q4-slider-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.q4-slider-button {
+  background: none;
+  border: none;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.q4-slider-button:hover {
+  background: var(--muted);
+  color: var(--primary);
+}
+
+.q4-slider-range {
+  width: 150px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.q4-reset-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  transition: all 0.15s ease;
+}
+
+.q4-reset-btn:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.q4-slider-text {
+  font-size: 13px;
+  color: var(--foreground);
+  min-width: 80px;
+}
+
