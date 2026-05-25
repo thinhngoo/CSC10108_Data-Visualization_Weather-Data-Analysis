@@ -1,21 +1,26 @@
 // Q7 – Tần suất trạng thái thời tiết (horizontal bar chart)
-// Container element expected: <div id="bar-condition"></div>
+// Container: <div id="bar-condition"></div>
 // Controls: #q7-sort-order, #q7-sort-group
 
+// ── Bar colors ──
 const BAR_COLOR = "#5b85aa";
 const BAR_COLOR_HOVER = "#3d6890";
 
+// ── Theme ──
 const TEXT_PRIMARY = "#374151";
 const TEXT_MUTED = "#6b7280";
 const GRID_STROKE = "#e5e7eb";
 const AXIS_STROKE = "#d1d5db";
 const GRID_DASH = "3 4";
 
+// ── Layout ──
 const MARGIN = { top: 28, right: 32, bottom: 64, left: 240 };
 const ROW_HEIGHT_PX = 22;
 const MIN_INNER_HEIGHT = 200;
 const SVG_WIDTH = 920;
 const BAR_RX = 2;
+
+// ── Animation ──
 const BAR_GROW_DURATION_MS = 700;
 const BAR_GROW_STAGGER_MS = 18;
 const HOVER_TRANSITION_MS = 120;
@@ -23,10 +28,13 @@ const VALUE_LABEL_DELAY_BASE_MS = 250;
 const VALUE_LABEL_DURATION_MS = 300;
 const TOOLTIP_OFFSET_X = 14;
 const TOOLTIP_OFFSET_Y = -10;
+
+// ── Typography ──
 const FONT_SIZE_AXIS = 12;
 const FONT_SIZE_AXIS_TITLE = 13;
 const FONT_SIZE_BAR_VALUE = 11;
 
+// ── Weather groups ──
 const GROUP_ORDER = {
   good: 0,
   rain: 1,
@@ -140,8 +148,10 @@ const SI_FORMAT = (numericValue) => {
   return String(numericValue);
 };
 
+/** Cached chart rows; control listeners re-call draw with this data. */
 let q7LatestData = null;
 
+/** Bind sort controls once; redraw uses cached rows. */
 function attachQ7ControlsOnce() {
   if (attachQ7ControlsOnce._attached) return;
   const sortOrderSelect = document.getElementById("q7-sort-order");
@@ -161,7 +171,7 @@ function readQ7SortOptions() {
   return { descending, sortByGroupTotal };
 }
 
-/** @param {{ condition: string, count: number, group?: string }[]} rows */
+/** Sort condition rows by count, optionally grouped by weather category total. */
 function sortCountRows(rows, descending, sortByGroupTotal) {
   const higherCountFirstMultiplier = descending ? -1 : 1;
 
@@ -186,7 +196,6 @@ function sortCountRows(rows, descending, sortByGroupTotal) {
     return workingCopy;
   }
 
-  /* Thứ tự nhóm = tổng số ngày của cả nhóm (tăng/giảm theo ô Sắp xếp). */
   const rowsGroupedByWeather = d3.group(
     workingCopy,
     (row) => row.group ?? "other",
@@ -227,6 +236,7 @@ export function drawQ7(chartInputRows) {
 
   const { descending, sortByGroupTotal } = readQ7SortOptions();
 
+  /* ── Data ── */
   const baseRows = d3
     .rollups(
       chartInputRows.filter(
@@ -254,7 +264,10 @@ export function drawQ7(chartInputRows) {
   /* ── Layout ── */
   const margin = MARGIN;
   const rowPxHeight = ROW_HEIGHT_PX;
-  const innerPlotHeight = Math.max(countRowsSorted.length * rowPxHeight, MIN_INNER_HEIGHT);
+  const innerPlotHeight = Math.max(
+    countRowsSorted.length * rowPxHeight,
+    MIN_INNER_HEIGHT,
+  );
   const svgOuterWidth = SVG_WIDTH;
   const svgOuterHeight = innerPlotHeight + margin.top + margin.bottom;
   const innerPlotWidth = svgOuterWidth - margin.left - margin.right;
@@ -291,7 +304,7 @@ export function drawQ7(chartInputRows) {
     Math.max(2, Math.round(innerPlotWidth / 90)),
   );
 
-  /* ── Column header label (top-left) ── */
+  /* ── Column header label ── */
   mainLayer
     .append("text")
     .attr("x", -margin.left + 12)
@@ -301,7 +314,7 @@ export function drawQ7(chartInputRows) {
     .attr("fill", TEXT_PRIMARY)
     .text("Day.Condition.Text");
 
-  /* ── Grid (vertical) ── */
+  /* ── Grid ── */
   mainLayer
     .append("g")
     .attr("class", "grid")
@@ -331,7 +344,9 @@ export function drawQ7(chartInputRows) {
         .ticks(approxTickTarget)
         .tickFormat(SI_FORMAT),
     )
-    .call((axisGroup) => axisGroup.select(".domain").attr("stroke", AXIS_STROKE))
+    .call((axisGroup) =>
+      axisGroup.select(".domain").attr("stroke", AXIS_STROKE),
+    )
     .selectAll("text")
     .attr("font-size", FONT_SIZE_AXIS)
     .attr("fill", TEXT_MUTED);
@@ -342,22 +357,23 @@ export function drawQ7(chartInputRows) {
   axisGroupLeftConditions
     .call(d3.axisLeft(yBandCondition).tickSize(0).tickPadding(8))
     .call((axisGroup) => axisGroup.select(".domain").remove());
-  axisGroupLeftConditions.selectAll(".tick").each(function (tickConditionLabel) {
-    const chartRowForLabel =
-      countLookupByCondition.get(tickConditionLabel);
-    const bucket = chartRowForLabel?.group ?? "other";
-    const labelFill =
-      sortByGroupTotal && GROUP_AXIS_LABEL_FILL[bucket] != null
-        ? GROUP_AXIS_LABEL_FILL[bucket]
-        : TEXT_PRIMARY;
-    d3.select(this)
-      .select("text")
-      .attr("font-size", FONT_SIZE_AXIS)
-      .attr("fill", labelFill)
-      .attr("font-weight", sortByGroupTotal ? "600" : "400");
-  });
+  axisGroupLeftConditions
+    .selectAll(".tick")
+    .each(function (tickConditionLabel) {
+      const chartRowForLabel = countLookupByCondition.get(tickConditionLabel);
+      const bucket = chartRowForLabel?.group ?? "other";
+      const labelFill =
+        sortByGroupTotal && GROUP_AXIS_LABEL_FILL[bucket] != null
+          ? GROUP_AXIS_LABEL_FILL[bucket]
+          : TEXT_PRIMARY;
+      d3.select(this)
+        .select("text")
+        .attr("font-size", FONT_SIZE_AXIS)
+        .attr("fill", labelFill)
+        .attr("font-weight", sortByGroupTotal ? "600" : "400");
+    });
 
-  /* ── Axis label (X) ── */
+  /* ── X-axis label ── */
   mainLayer
     .append("text")
     .attr("x", innerPlotWidth / 2)
@@ -382,7 +398,7 @@ export function drawQ7(chartInputRows) {
          Tỉ lệ: ${pct}%`;
   }
 
-  /* ── Bars (with grow-in transition) ── */
+  /* ── Bars ── */
   const bars = mainLayer
     .selectAll("rect.bar")
     .data(countRowsSorted, (row) => row.condition)
@@ -445,7 +461,7 @@ export function drawQ7(chartInputRows) {
       if (chartRow) hideTooltipRestoreBarFill(mouseEvent, chartRow);
     });
 
-  /* ── Value labels at end of bars (fade in after grow) ── */
+  /* ── Value labels ── */
   mainLayer
     .selectAll("text.bar-value")
     .data(countRowsSorted, (row) => row.condition)
@@ -462,7 +478,10 @@ export function drawQ7(chartInputRows) {
     .attr("opacity", 0)
     .text((row) => row.count.toLocaleString("vi-VN"))
     .transition()
-    .delay((_row, rowIndex) => VALUE_LABEL_DELAY_BASE_MS + rowIndex * BAR_GROW_STAGGER_MS)
+    .delay(
+      (_row, rowIndex) =>
+        VALUE_LABEL_DELAY_BASE_MS + rowIndex * BAR_GROW_STAGGER_MS,
+    )
     .duration(VALUE_LABEL_DURATION_MS)
     .attr("opacity", 1);
 }

@@ -1,8 +1,10 @@
-// Q8 – Nhiệt độ theo trạng thái thời tiết  (box plot per condition)
-// Container element expected: <div id="box-condition-temp"></div>
+// Q8 – Nhiệt độ theo trạng thái thời tiết (box plot per condition)
+// Container: <div id="box-condition-temp"></div>
+// Controls: #q8-sort-metric, #q8-sort-order
 
-const BOX_DARK = "#4ea3a8"; // Q1 → median (lower half)
-const BOX_LIGHT = "#b9e4ec"; // median → Q3 (upper half)
+// ── Box colors ──
+const BOX_DARK = "#4ea3a8"; // Q1 → median
+const BOX_LIGHT = "#b9e4ec"; // median → Q3
 const BOX_DARK_HOVER = "#3b8a8f";
 const BOX_LIGHT_HOVER = "#9dd9e3";
 const WHISKER_STROKE = "#6b7280";
@@ -10,37 +12,46 @@ const STRIP_STROKE = "#4ea3a8";
 const BOX_STROKE = "white";
 const STRIP_OPACITY = 0.08;
 
+// ── Theme ──
 const TEXT_PRIMARY = "#374151";
 const TEXT_MUTED = "#6b7280";
 const GRID_STROKE = "#e5e7eb";
 const AXIS_STROKE = "#d1d5db";
 const GRID_DASH = "3 4";
 
+// ── Layout ──
 const MARGIN = { top: 40, right: 24, bottom: 160, left: 64 };
 const SVG_WIDTH = 980;
 const SVG_HEIGHT = 620;
 const Y_AXIS_TICKS = 7;
+
+// ── Animation ──
 const BOX_ANIM_DURATION_MS = 600;
 const BOX_ANIM_STAGGER_MS = 22;
 const BOX_RECT_DELAY_MS = 200;
 const BOX_RECT_DURATION_MS = 500;
 const WHISKER_CAP_DELAY_MS = 400;
 const WHISKER_CAP_DURATION_MS = 220;
-const FONT_SIZE_AXIS = 12;
-const FONT_SIZE_AXIS_TITLE = 13;
-const FONT_SIZE_TICK = 11;
 const TOOLTIP_OFFSET_X = 14;
 const TOOLTIP_OFFSET_Y = -10;
 
+// ── Typography ──
+const FONT_SIZE_AXIS = 12;
+const FONT_SIZE_AXIS_TITLE = 13;
+const FONT_SIZE_TICK = 11;
+
+// ── Sort options ──
 /** @readonly */
 const Q8_SORT_METRICS = ["min", "max", "median", "mean"];
 
+/** Cached chart rows; control listeners re-call draw with this data. */
 let q8LatestData = null;
 
 function normalizeQ8SortMetric(valueFromDom) {
   return Q8_SORT_METRICS.includes(valueFromDom) ? valueFromDom : "median";
 }
 
+/** Bind sort controls once; redraw uses cached rows. */
 function attachQ8ControlsOnce() {
   if (attachQ8ControlsOnce._attached) return;
   const metricSelect = document.getElementById("q8-sort-metric");
@@ -60,9 +71,7 @@ function readQ8SortOptions() {
   return { sortMetric, descending };
 }
 
-/**
- * Sắp xếp mỗi hộp theo một chỉ số đã chọn (+ tie-break theo tên condition).
- */
+/** Sort box stats by selected metric; tie-break on condition name. */
 function sortConditionStatsForDisplay(
   statsUnsorted,
   sortMetricKey,
@@ -98,7 +107,7 @@ export function drawQ8(chartInputRows) {
 
   const { sortMetric: sortMetricKey, descending } = readQ8SortOptions();
 
-  /* ── Group temps by condition & compute box stats ── */
+  /* ── Data ── */
   const tempsGroupedByCondition = d3.rollups(
     chartInputRows.filter(
       (record) =>
@@ -111,8 +120,8 @@ export function drawQ8(chartInputRows) {
     (record) => record.condition,
   );
 
-  const conditionStatsUnsorted = tempsGroupedByCondition
-    .map(([conditionLabel, sortedTempsAscending]) => {
+  const conditionStatsUnsorted = tempsGroupedByCondition.map(
+    ([conditionLabel, sortedTempsAscending]) => {
       const quartileLower = d3.quantile(sortedTempsAscending, 0.25);
       const quartileMedian = d3.quantile(sortedTempsAscending, 0.5);
       const quartileUpper = d3.quantile(sortedTempsAscending, 0.75);
@@ -127,7 +136,8 @@ export function drawQ8(chartInputRows) {
         q3: quartileUpper,
         mean: d3.mean(sortedTempsAscending),
       };
-    });
+    },
+  );
 
   const conditionBoxStats = sortConditionStatsForDisplay(
     conditionStatsUnsorted,
@@ -176,7 +186,7 @@ export function drawQ8(chartInputRows) {
     .range([innerPlotHeight, 0])
     .nice();
 
-  /* ── Column header label (top, centered) ── */
+  /* ── Column header label ── */
   mainLayer
     .append("text")
     .attr("x", innerPlotWidth / 2)
@@ -187,7 +197,7 @@ export function drawQ8(chartInputRows) {
     .attr("fill", TEXT_PRIMARY)
     .text("Day.Condition.Text");
 
-  /* ── Grid (horizontal) ── */
+  /* ── Grid ── */
   mainLayer
     .append("g")
     .attr("class", "grid")
@@ -212,7 +222,8 @@ export function drawQ8(chartInputRows) {
     .attr("transform", `translate(0,${innerPlotHeight})`)
     .call(d3.axisBottom(xBandCondition).tickSize(0).tickPadding(10))
     .call((axisGroup) =>
-      axisGroup.select(".domain").attr("stroke", AXIS_STROKE))
+      axisGroup.select(".domain").attr("stroke", AXIS_STROKE),
+    )
     .selectAll("text")
     .attr("font-size", FONT_SIZE_TICK)
     .attr("fill", TEXT_PRIMARY)
@@ -226,7 +237,8 @@ export function drawQ8(chartInputRows) {
     .append("g")
     .call(d3.axisLeft(yScaleTemperature).ticks(Y_AXIS_TICKS))
     .call((axisGroup) =>
-      axisGroup.select(".domain").attr("stroke", AXIS_STROKE))
+      axisGroup.select(".domain").attr("stroke", AXIS_STROKE),
+    )
     .selectAll("text")
     .attr("font-size", FONT_SIZE_AXIS)
     .attr("fill", TEXT_MUTED);
@@ -248,11 +260,8 @@ export function drawQ8(chartInputRows) {
     ? d3.select("body").append("div").attr("class", "chart-tooltip")
     : tooltipBase;
 
-  /* ── Strip plot (faint individual day ticks behind boxes) ── */
-  const stripJitterHalfWidth = Math.min(
-    xBandCondition.bandwidth() * 0.7,
-    14,
-  );
+  /* ── Strip plot ── */
+  const stripJitterHalfWidth = Math.min(xBandCondition.bandwidth() * 0.7, 14);
   const randomStripHorizontalOffset = d3.randomUniform(
     -stripJitterHalfWidth,
     stripJitterHalfWidth - 4,
@@ -287,7 +296,7 @@ export function drawQ8(chartInputRows) {
       .attr("stroke-width", 1);
   });
 
-  /* ── Box groups (one per condition) ── */
+  /* ── Box groups ── */
   const boxGroups = mainLayer
     .selectAll("g.box")
     .data(conditionBoxStats, (statRow) => statRow.condition)
@@ -295,8 +304,7 @@ export function drawQ8(chartInputRows) {
     .attr("class", "box")
     .attr(
       "transform",
-      (statRow) =>
-        `translate(${xBandCondition(statRow.condition)},0)`,
+      (statRow) => `translate(${xBandCondition(statRow.condition)},0)`,
     )
     .style("cursor", "pointer")
     .on("mouseenter", function (mouseEvent, statRow) {
@@ -327,7 +335,7 @@ export function drawQ8(chartInputRows) {
   const bandWidth = xBandCondition.bandwidth();
   const boxCenterX = bandWidth / 2;
 
-  /* Vertical whisker line (min → max) */
+  /* ── Whisker line ── */
   boxGroups
     .append("line")
     .attr("class", "whisker-line")
@@ -343,7 +351,7 @@ export function drawQ8(chartInputRows) {
     .ease(d3.easeCubicOut)
     .attr("y2", (statRow) => yScaleTemperature(statRow.max));
 
-  /* Whisker caps */
+  /* ── Whisker caps ── */
   const whiskerCapWidth = Math.min(bandWidth * 0.5, 18);
   boxGroups
     .append("line")
@@ -366,11 +374,14 @@ export function drawQ8(chartInputRows) {
     .attr("stroke-width", 1)
     .attr("opacity", 0)
     .transition()
-    .delay((_statRow, boxIndex) => WHISKER_CAP_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS)
+    .delay(
+      (_statRow, boxIndex) =>
+        WHISKER_CAP_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS,
+    )
     .duration(WHISKER_CAP_DURATION_MS)
     .attr("opacity", 1);
 
-  /* Lower half (Q1 → median) — darker */
+  /* ── Box lower (Q1–median) ── */
   boxGroups
     .append("rect")
     .attr("class", "box-lower")
@@ -382,21 +393,21 @@ export function drawQ8(chartInputRows) {
     .attr("stroke", BOX_STROKE)
     .attr("stroke-width", 0.5)
     .transition()
-    .delay((_statRow, boxIndex) => BOX_RECT_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS)
+    .delay(
+      (_statRow, boxIndex) =>
+        BOX_RECT_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS,
+    )
     .duration(BOX_RECT_DURATION_MS)
     .ease(d3.easeCubicOut)
     .attr("y", (statRow) => yScaleTemperature(statRow.median))
-    .attr(
-      "height",
-      (statRow) =>
-        Math.max(
-          0,
-          yScaleTemperature(statRow.q1) -
-            yScaleTemperature(statRow.median),
-        ),
+    .attr("height", (statRow) =>
+      Math.max(
+        0,
+        yScaleTemperature(statRow.q1) - yScaleTemperature(statRow.median),
+      ),
     );
 
-  /* Upper half (median → Q3) — lighter */
+  /* ── Box upper (median–Q3) ── */
   boxGroups
     .append("rect")
     .attr("class", "box-upper")
@@ -408,21 +419,21 @@ export function drawQ8(chartInputRows) {
     .attr("stroke", BOX_STROKE)
     .attr("stroke-width", 0.5)
     .transition()
-    .delay((_statRow, boxIndex) => BOX_RECT_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS)
+    .delay(
+      (_statRow, boxIndex) =>
+        BOX_RECT_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS,
+    )
     .duration(BOX_RECT_DURATION_MS)
     .ease(d3.easeCubicOut)
     .attr("y", (statRow) => yScaleTemperature(statRow.q3))
-    .attr(
-      "height",
-      (statRow) =>
-        Math.max(
-          0,
-          yScaleTemperature(statRow.median) -
-            yScaleTemperature(statRow.q3),
-        ),
+    .attr("height", (statRow) =>
+      Math.max(
+        0,
+        yScaleTemperature(statRow.median) - yScaleTemperature(statRow.q3),
+      ),
     );
 
-  /* Median tick (sits on top, between two halves) */
+  /* ── Median line ── */
   boxGroups
     .append("line")
     .attr("class", "median-line")
@@ -434,7 +445,7 @@ export function drawQ8(chartInputRows) {
     .attr("stroke-width", 1.5);
 }
 
-/* ── Helper: wrap rotated tick label on whitespace ── */
+/* ── Helper: wrap tick labels ── */
 function wrapTickLabelsOnWhitespace(textSelection) {
   textSelection.each(function () {
     const tickLabelShape = d3.select(this);

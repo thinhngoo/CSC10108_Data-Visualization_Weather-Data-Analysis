@@ -1,21 +1,30 @@
-// Q9 – Thời tiết giữa các khu vực (3 region-level bar charts).
+// Q9 – Thời tiết giữa các khu vực (3 region-level bar charts)
+// Container: #bar-region-temp, #bar-region-humidity, #bar-region-precip
+// Controls: #q9-sort-metric, #q9-sort-order
 
+// ── Bar colors ──
 const COLOR_TEMP = "#f3a85a";
 const COLOR_HUMIDITY = "#80c9b8";
 const COLOR_PRECIP = "#5b85aa";
 
+// ── Theme ──
 const TEXT_PRIMARY = "#374151";
 const TEXT_MUTED = "#6b7280";
 const GRID_STROKE = "#e5e7eb";
 const AXIS_STROKE = "#d1d5db";
 const GRID_DASH = "3 4";
 
+// ── Layout ──
 const CHART_WIDTH = 920;
 const BAR_MARGIN = { top: 50, right: 16, bottom: 88, left: 64 };
 const BAR_RX = 2;
+const X_TICK_PAD = 20;
+
+// ── Animation ──
 const BAR_DURATION_MS = 650;
 const BAR_STAGGER_MS = 60;
-const X_TICK_PAD = 20;
+
+// ── Typography ──
 const FONT_SIZE_HEADER = 12;
 const FONT_SIZE_AXIS = 11;
 const FONT_SIZE_AXIS_TITLE = 12;
@@ -27,9 +36,10 @@ const SI_FORMAT = (v) => {
   return String(v);
 };
 
-/** Parsed chart rows để tái render khi đổi sort (listeners gọi redraw). */
+/** Cached region aggregates; control listeners re-call draw with this data. */
 let q9CachedRows = null;
 
+/** Bind sort controls once; redraw uses cached rows. */
 function attachQ9SortListenersOnce() {
   const root = document.getElementById("q9-controls");
   if (!root || root.dataset.listenersBound === "1") return;
@@ -87,6 +97,7 @@ function drawQ9FromCache() {
 
   const { metric, ascending } = readQ9SortOptions();
 
+  /* ── Sort ── */
   let avgTempRows;
   let avgHumRows;
   let precipRowsOrdered;
@@ -111,6 +122,7 @@ function drawQ9FromCache() {
     }));
   }
 
+  /* ── Draw ── */
   drawRegionBar({
     selector: "#bar-region-temp",
     rows: avgTempRows,
@@ -153,6 +165,7 @@ function drawQ9FromCache() {
 }
 
 export function drawQ9(data) {
+  /* ── Data ── */
   const valid = data.filter(
     (d) =>
       d.region &&
@@ -205,8 +218,6 @@ export function drawQ9(data) {
   drawQ9FromCache();
 }
 
-/* ─────────────────────────────────────────────────────────── */
-
 function drawRegionBar({
   selector,
   rows,
@@ -248,7 +259,7 @@ function drawRegionBar({
 
   const y = d3.scaleLinear().domain(yDomain).range([H, 0]).nice();
 
-  /* ── Top header (centered, like Tableau) ── */
+  /* ── Column header label ── */
   g.append("text")
     .attr("x", W / 2)
     .attr("y", -16)
@@ -289,7 +300,7 @@ function drawRegionBar({
     .attr("font-size", FONT_SIZE_AXIS)
     .attr("fill", TEXT_MUTED);
 
-  /* ── Y label ── */
+  /* ── Y-axis label ── */
   g.append("text")
     .attr("transform", "rotate(-90)")
     .attr("x", -H / 2)
@@ -302,7 +313,7 @@ function drawRegionBar({
   const barDur = BAR_DURATION_MS;
   const barDelay = (_, i) => i * BAR_STAGGER_MS;
 
-  /* ── Bars (grow-up transition) ── */
+  /* ── Bars ── */
   g.selectAll("rect.bar")
     .data(rows, (d) => d.region)
     .join("rect")
@@ -320,7 +331,7 @@ function drawRegionBar({
     .attr("y", (d) => y(d.value))
     .attr("height", (d) => H - y(d.value));
 
-  /* ── Values above bars (replacing tooltip) ── */
+  /* ── Value labels ── */
   g.selectAll("text.bar-value")
     .data(rows, (d) => d.region)
     .join("text")
@@ -341,9 +352,7 @@ function drawRegionBar({
     .attr("y", (d) => y(d.value) - 6);
 }
 
-/* ─────────────────────────────────────────────────────────── */
-/* Wrap long horizontal tick labels onto two lines (works for
-   un-rotated axis labels). */
+/* ── Helper: wrap tick labels ── */
 function wrapTickLabel(textSel, width) {
   textSel.each(function () {
     const text = d3.select(this);
