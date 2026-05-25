@@ -3,7 +3,7 @@ Build datasets/cleaned-dataset.csv from the fixed raw export.
 
 Transforms:
   - location.region: rename "Tr [*]ung du và miền núi Bắc Bộ" → "Trung du và miền núi Bắc Bộ"
-  - Remove snow-related columns if present (e.g. day.totalsnow_cm, snow)
+  - Remove snow column if present (e.g. day.totalsnow_cm)
 
 Run (from repo root):
 
@@ -18,7 +18,7 @@ from pathlib import Path
 REGION_BEFORE = "Tr [*]ung du và miền núi Bắc Bộ"
 REGION_AFTER = "Trung du và miền núi Bắc Bộ"
 REGION_KEY = "location.region"
-DROP_COLUMNS_EXACT = frozenset({"day.totalsnow_cm", "snow"})
+DROP_COLUMNS_EXACT = frozenset({"day.totalsnow_cm"})
 
 
 def _default_datasets_dir() -> Path:

@@ -2,13 +2,13 @@
 
 Weather data visualization dashboard built with **D3.js** and served by a small **Flask** app.
 
-## Frontend / D3
+## Frontend
 
 Charts use **[D3.js v7](https://d3js.org/)**, loaded in `templates/base.html` from the official CDN (`https://d3js.org/d3.v7.min.js`).
 
 ## Data
 
-- Raw preview: `datasets/df_weather_fixed_utf8.csv`
+- Raw dataset: `datasets/df_weather_fixed_utf8.csv`
 - Cleaned dataset (`python build_cleaned.py`): `datasets/cleaned-dataset.csv`.
 
 ## Run locally (Windows / PowerShell)
@@ -27,9 +27,7 @@ Start the server:
 python .\server.py
 ```
 
-Then open:
-
-- `http://localhost:8000/`
+Then open `http://localhost:8000/`
 
 ## Project structure
 

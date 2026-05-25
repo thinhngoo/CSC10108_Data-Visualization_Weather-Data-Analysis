@@ -5,6 +5,28 @@
 const BAR_COLOR = "#5b85aa";
 const BAR_COLOR_HOVER = "#3d6890";
 
+const TEXT_PRIMARY = "#374151";
+const TEXT_MUTED = "#6b7280";
+const GRID_STROKE = "#e5e7eb";
+const AXIS_STROKE = "#d1d5db";
+const GRID_DASH = "3 4";
+
+const MARGIN = { top: 28, right: 32, bottom: 64, left: 240 };
+const ROW_HEIGHT_PX = 22;
+const MIN_INNER_HEIGHT = 200;
+const SVG_WIDTH = 920;
+const BAR_RX = 2;
+const BAR_GROW_DURATION_MS = 700;
+const BAR_GROW_STAGGER_MS = 18;
+const HOVER_TRANSITION_MS = 120;
+const VALUE_LABEL_DELAY_BASE_MS = 250;
+const VALUE_LABEL_DURATION_MS = 300;
+const TOOLTIP_OFFSET_X = 14;
+const TOOLTIP_OFFSET_Y = -10;
+const FONT_SIZE_AXIS = 12;
+const FONT_SIZE_AXIS_TITLE = 13;
+const FONT_SIZE_BAR_VALUE = 11;
+
 const GROUP_ORDER = {
   good: 0,
   rain: 1,
@@ -230,10 +252,10 @@ export function drawQ7(chartInputRows) {
   );
 
   /* ── Layout ── */
-  const margin = { top: 28, right: 32, bottom: 64, left: 240 };
-  const rowPxHeight = 22;
-  const innerPlotHeight = Math.max(countRowsSorted.length * rowPxHeight, 200);
-  const svgOuterWidth = 920;
+  const margin = MARGIN;
+  const rowPxHeight = ROW_HEIGHT_PX;
+  const innerPlotHeight = Math.max(countRowsSorted.length * rowPxHeight, MIN_INNER_HEIGHT);
+  const svgOuterWidth = SVG_WIDTH;
   const svgOuterHeight = innerPlotHeight + margin.top + margin.bottom;
   const innerPlotWidth = svgOuterWidth - margin.left - margin.right;
 
@@ -274,9 +296,9 @@ export function drawQ7(chartInputRows) {
     .append("text")
     .attr("x", -margin.left + 12)
     .attr("y", -10)
-    .attr("font-size", 12)
+    .attr("font-size", FONT_SIZE_AXIS)
     .attr("font-weight", 600)
-    .attr("fill", "#374151")
+    .attr("fill", TEXT_PRIMARY)
     .text("Day.Condition.Text");
 
   /* ── Grid (vertical) ── */
@@ -295,8 +317,8 @@ export function drawQ7(chartInputRows) {
       axisGroup.select(".domain").remove();
       axisGroup
         .selectAll("line")
-        .attr("stroke", "#e5e7eb")
-        .attr("stroke-dasharray", "3 4");
+        .attr("stroke", GRID_STROKE)
+        .attr("stroke-dasharray", GRID_DASH);
     });
 
   /* ── Axes ── */
@@ -309,10 +331,10 @@ export function drawQ7(chartInputRows) {
         .ticks(approxTickTarget)
         .tickFormat(SI_FORMAT),
     )
-    .call((axisGroup) => axisGroup.select(".domain").attr("stroke", "#d1d5db"))
+    .call((axisGroup) => axisGroup.select(".domain").attr("stroke", AXIS_STROKE))
     .selectAll("text")
-    .attr("font-size", 12)
-    .attr("fill", "#6b7280");
+    .attr("font-size", FONT_SIZE_AXIS)
+    .attr("fill", TEXT_MUTED);
 
   const axisGroupLeftConditions = mainLayer
     .append("g")
@@ -327,10 +349,10 @@ export function drawQ7(chartInputRows) {
     const labelFill =
       sortByGroupTotal && GROUP_AXIS_LABEL_FILL[bucket] != null
         ? GROUP_AXIS_LABEL_FILL[bucket]
-        : "#374151";
+        : TEXT_PRIMARY;
     d3.select(this)
       .select("text")
-      .attr("font-size", 12)
+      .attr("font-size", FONT_SIZE_AXIS)
       .attr("fill", labelFill)
       .attr("font-weight", sortByGroupTotal ? "600" : "400");
   });
@@ -341,8 +363,8 @@ export function drawQ7(chartInputRows) {
     .attr("x", innerPlotWidth / 2)
     .attr("y", innerPlotHeight + 48)
     .attr("text-anchor", "middle")
-    .attr("font-size", 13)
-    .attr("fill", "#374151")
+    .attr("font-size", FONT_SIZE_AXIS_TITLE)
+    .attr("fill", TEXT_PRIMARY)
     .text("Frequency (Days)");
 
   /* ── Tooltip ── */
@@ -371,21 +393,21 @@ export function drawQ7(chartInputRows) {
     .attr("height", yBandCondition.bandwidth())
     .attr("width", 0)
     .attr("fill", BAR_COLOR)
-    .attr("rx", 2);
+    .attr("rx", BAR_RX);
 
   function showTooltipForRow(mouseEvent, chartRow) {
     floatingTooltip.style("opacity", 1).html(tooltipHtmlForRow(chartRow));
     bars
       .filter((barRow) => barRow.condition === chartRow.condition)
       .transition()
-      .duration(120)
+      .duration(HOVER_TRANSITION_MS)
       .attr("fill", BAR_COLOR_HOVER);
   }
 
   function moveFloatingTooltip(mouseEvent) {
     floatingTooltip
-      .style("left", mouseEvent.pageX + 14 + "px")
-      .style("top", mouseEvent.pageY - 10 + "px");
+      .style("left", mouseEvent.pageX + TOOLTIP_OFFSET_X + "px")
+      .style("top", mouseEvent.pageY + TOOLTIP_OFFSET_Y + "px");
   }
 
   function hideTooltipRestoreBarFill(_mouseEvent, chartRow) {
@@ -393,7 +415,7 @@ export function drawQ7(chartInputRows) {
     bars
       .filter((barRow) => barRow.condition === chartRow.condition)
       .transition()
-      .duration(120)
+      .duration(HOVER_TRANSITION_MS)
       .attr("fill", BAR_COLOR);
   }
 
@@ -405,8 +427,8 @@ export function drawQ7(chartInputRows) {
 
   bars
     .transition()
-    .duration(700)
-    .delay((_row, rowIndex) => rowIndex * 18)
+    .duration(BAR_GROW_DURATION_MS)
+    .delay((_row, rowIndex) => rowIndex * BAR_GROW_STAGGER_MS)
     .ease(d3.easeCubicOut)
     .attr("width", (row) => xScaleFrequency(row.count));
 
@@ -435,12 +457,12 @@ export function drawQ7(chartInputRows) {
     )
     .attr("x", (row) => xScaleFrequency(row.count) + 6)
     .attr("dy", "0.35em")
-    .attr("font-size", 11)
-    .attr("fill", "#6b7280")
+    .attr("font-size", FONT_SIZE_BAR_VALUE)
+    .attr("fill", TEXT_MUTED)
     .attr("opacity", 0)
     .text((row) => row.count.toLocaleString("vi-VN"))
     .transition()
-    .delay((_row, rowIndex) => 250 + rowIndex * 18)
-    .duration(300)
+    .delay((_row, rowIndex) => VALUE_LABEL_DELAY_BASE_MS + rowIndex * BAR_GROW_STAGGER_MS)
+    .duration(VALUE_LABEL_DURATION_MS)
     .attr("opacity", 1);
 }

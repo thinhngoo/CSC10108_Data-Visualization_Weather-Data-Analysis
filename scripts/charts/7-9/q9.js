@@ -4,6 +4,23 @@ const COLOR_TEMP = "#f3a85a";
 const COLOR_HUMIDITY = "#80c9b8";
 const COLOR_PRECIP = "#5b85aa";
 
+const TEXT_PRIMARY = "#374151";
+const TEXT_MUTED = "#6b7280";
+const GRID_STROKE = "#e5e7eb";
+const AXIS_STROKE = "#d1d5db";
+const GRID_DASH = "3 4";
+
+const CHART_WIDTH = 920;
+const BAR_MARGIN = { top: 50, right: 16, bottom: 88, left: 64 };
+const BAR_RX = 2;
+const BAR_DURATION_MS = 650;
+const BAR_STAGGER_MS = 60;
+const X_TICK_PAD = 20;
+const FONT_SIZE_HEADER = 12;
+const FONT_SIZE_AXIS = 11;
+const FONT_SIZE_AXIS_TITLE = 12;
+const FONT_SIZE_BAR_VALUE = 10;
+
 const SI_FORMAT = (v) => {
   if (v === 0) return "0K";
   if (Math.abs(v) >= 1000) return d3.format("~s")(v).replace("G", "B");
@@ -205,9 +222,8 @@ function drawRegionBar({
   container.html("");
 
   /* ── Layout ── */
-  /* Top: room for “Location.Region”. Bottom: wrapped region names must clear x-axis tickPadding */
-  const margin = { top: 50, right: 16, bottom: 88, left: 64 };
-  const totalW = 920;
+  const margin = BAR_MARGIN;
+  const totalW = CHART_WIDTH;
   const totalH = height;
   const W = totalW - margin.left - margin.right;
   const H = totalH - margin.top - margin.bottom;
@@ -237,9 +253,9 @@ function drawRegionBar({
     .attr("x", W / 2)
     .attr("y", -16)
     .attr("text-anchor", "middle")
-    .attr("font-size", 12)
+    .attr("font-size", FONT_SIZE_HEADER)
     .attr("font-weight", 600)
-    .attr("fill", "#374151")
+    .attr("fill", TEXT_PRIMARY)
     .text("Location.Region");
 
   /* ── Grid ── */
@@ -249,29 +265,29 @@ function drawRegionBar({
     .call((ax) => {
       ax.select(".domain").remove();
       ax.selectAll("line")
-        .attr("stroke", "#e5e7eb")
-        .attr("stroke-dasharray", "3 4");
+        .attr("stroke", GRID_STROKE)
+        .attr("stroke-dasharray", GRID_DASH);
     });
 
   /* ── Axes ── */
-  const xTickPad = 20;
+  const xTickPad = X_TICK_PAD;
   g.append("g")
     .attr("transform", `translate(0,${H})`)
     .call(d3.axisBottom(x).tickSize(0).tickPadding(xTickPad))
-    .call((ax) => ax.select(".domain").attr("stroke", "#d1d5db"))
+    .call((ax) => ax.select(".domain").attr("stroke", AXIS_STROKE))
     .selectAll("text")
-    .attr("font-size", 11)
-    .attr("fill", "#374151")
+    .attr("font-size", FONT_SIZE_AXIS)
+    .attr("fill", TEXT_PRIMARY)
     .call(wrapTickLabel, x.bandwidth() + 14)
     /* Extra gap: axis pushes baseline; multi-line tspans still sit visually tight without this */
     .attr("dy", "1em");
 
   g.append("g")
     .call(d3.axisLeft(y).ticks(yTicks).tickFormat(yTickFmt))
-    .call((ax) => ax.select(".domain").attr("stroke", "#d1d5db"))
+    .call((ax) => ax.select(".domain").attr("stroke", AXIS_STROKE))
     .selectAll("text")
-    .attr("font-size", 11)
-    .attr("fill", "#6b7280");
+    .attr("font-size", FONT_SIZE_AXIS)
+    .attr("fill", TEXT_MUTED);
 
   /* ── Y label ── */
   g.append("text")
@@ -279,12 +295,12 @@ function drawRegionBar({
     .attr("x", -H / 2)
     .attr("y", -48)
     .attr("text-anchor", "middle")
-    .attr("font-size", 12)
-    .attr("fill", "#374151")
+    .attr("font-size", FONT_SIZE_AXIS_TITLE)
+    .attr("fill", TEXT_PRIMARY)
     .text(yLabel);
 
-  const barDur = 650;
-  const barDelay = (_, i) => i * 60;
+  const barDur = BAR_DURATION_MS;
+  const barDelay = (_, i) => i * BAR_STAGGER_MS;
 
   /* ── Bars (grow-up transition) ── */
   g.selectAll("rect.bar")
@@ -296,7 +312,7 @@ function drawRegionBar({
     .attr("y", H)
     .attr("height", 0)
     .attr("fill", color)
-    .attr("rx", 2)
+    .attr("rx", BAR_RX)
     .transition()
     .duration(barDur)
     .delay(barDelay)
@@ -312,9 +328,9 @@ function drawRegionBar({
     .attr("pointer-events", "none")
     .attr("text-anchor", "middle")
     .attr("dominant-baseline", "alphabetic")
-    .attr("font-size", 10)
+    .attr("font-size", FONT_SIZE_BAR_VALUE)
     .attr("font-weight", 600)
-    .attr("fill", "#374151")
+    .attr("fill", TEXT_PRIMARY)
     .attr("x", (d) => x(d.region) + x.bandwidth() / 2)
     .attr("y", H)
     .text((d) => valueFmt(d.value))

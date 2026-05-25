@@ -1,4 +1,4 @@
-import { createCleaningProfileSection } from "../loaders/cleaning.js";
+import { createCleaningProfileSection } from "./cleaning.js";
 
 const PREVIEW_ROWS = 200;
 const DEBOUNCE_MS = 180;

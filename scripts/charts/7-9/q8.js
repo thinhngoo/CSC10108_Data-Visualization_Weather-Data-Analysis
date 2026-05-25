@@ -3,8 +3,34 @@
 
 const BOX_DARK = "#4ea3a8"; // Q1 → median (lower half)
 const BOX_LIGHT = "#b9e4ec"; // median → Q3 (upper half)
+const BOX_DARK_HOVER = "#3b8a8f";
+const BOX_LIGHT_HOVER = "#9dd9e3";
 const WHISKER_STROKE = "#6b7280";
 const STRIP_STROKE = "#4ea3a8";
+const BOX_STROKE = "white";
+const STRIP_OPACITY = 0.08;
+
+const TEXT_PRIMARY = "#374151";
+const TEXT_MUTED = "#6b7280";
+const GRID_STROKE = "#e5e7eb";
+const AXIS_STROKE = "#d1d5db";
+const GRID_DASH = "3 4";
+
+const MARGIN = { top: 40, right: 24, bottom: 160, left: 64 };
+const SVG_WIDTH = 980;
+const SVG_HEIGHT = 620;
+const Y_AXIS_TICKS = 7;
+const BOX_ANIM_DURATION_MS = 600;
+const BOX_ANIM_STAGGER_MS = 22;
+const BOX_RECT_DELAY_MS = 200;
+const BOX_RECT_DURATION_MS = 500;
+const WHISKER_CAP_DELAY_MS = 400;
+const WHISKER_CAP_DURATION_MS = 220;
+const FONT_SIZE_AXIS = 12;
+const FONT_SIZE_AXIS_TITLE = 13;
+const FONT_SIZE_TICK = 11;
+const TOOLTIP_OFFSET_X = 14;
+const TOOLTIP_OFFSET_Y = -10;
 
 /** @readonly */
 const Q8_SORT_METRICS = ["min", "max", "median", "mean"];
@@ -110,9 +136,9 @@ export function drawQ8(chartInputRows) {
   );
 
   /* ── Layout ── */
-  const margin = { top: 40, right: 24, bottom: 160, left: 64 };
-  const svgOuterWidth = 980;
-  const svgOuterHeight = 620;
+  const margin = MARGIN;
+  const svgOuterWidth = SVG_WIDTH;
+  const svgOuterHeight = SVG_HEIGHT;
   const innerPlotWidth = svgOuterWidth - margin.left - margin.right;
   const innerPlotHeight = svgOuterHeight - margin.top - margin.bottom;
 
@@ -156,9 +182,9 @@ export function drawQ8(chartInputRows) {
     .attr("x", innerPlotWidth / 2)
     .attr("y", -18)
     .attr("text-anchor", "middle")
-    .attr("font-size", 12)
+    .attr("font-size", FONT_SIZE_AXIS)
     .attr("font-weight", 600)
-    .attr("fill", "#374151")
+    .attr("fill", TEXT_PRIMARY)
     .text("Day.Condition.Text");
 
   /* ── Grid (horizontal) ── */
@@ -168,7 +194,7 @@ export function drawQ8(chartInputRows) {
     .call(
       d3
         .axisLeft(yScaleTemperature)
-        .ticks(7)
+        .ticks(Y_AXIS_TICKS)
         .tickSize(-innerPlotWidth)
         .tickFormat(""),
     )
@@ -176,8 +202,8 @@ export function drawQ8(chartInputRows) {
       axisGroup.select(".domain").remove();
       axisGroup
         .selectAll("line")
-        .attr("stroke", "#e5e7eb")
-        .attr("stroke-dasharray", "3 4");
+        .attr("stroke", GRID_STROKE)
+        .attr("stroke-dasharray", GRID_DASH);
     });
 
   /* ── Axes ── */
@@ -186,10 +212,10 @@ export function drawQ8(chartInputRows) {
     .attr("transform", `translate(0,${innerPlotHeight})`)
     .call(d3.axisBottom(xBandCondition).tickSize(0).tickPadding(10))
     .call((axisGroup) =>
-      axisGroup.select(".domain").attr("stroke", "#d1d5db"))
+      axisGroup.select(".domain").attr("stroke", AXIS_STROKE))
     .selectAll("text")
-    .attr("font-size", 11)
-    .attr("fill", "#374151")
+    .attr("font-size", FONT_SIZE_TICK)
+    .attr("fill", TEXT_PRIMARY)
     .attr("transform", "rotate(-65)")
     .attr("text-anchor", "end")
     .attr("dx", "-0.4em")
@@ -198,12 +224,12 @@ export function drawQ8(chartInputRows) {
 
   mainLayer
     .append("g")
-    .call(d3.axisLeft(yScaleTemperature).ticks(7))
+    .call(d3.axisLeft(yScaleTemperature).ticks(Y_AXIS_TICKS))
     .call((axisGroup) =>
-      axisGroup.select(".domain").attr("stroke", "#d1d5db"))
+      axisGroup.select(".domain").attr("stroke", AXIS_STROKE))
     .selectAll("text")
-    .attr("font-size", 12)
-    .attr("fill", "#6b7280");
+    .attr("font-size", FONT_SIZE_AXIS)
+    .attr("fill", TEXT_MUTED);
 
   /* ── Y-axis label ── */
   mainLayer
@@ -212,8 +238,8 @@ export function drawQ8(chartInputRows) {
     .attr("x", -innerPlotHeight / 2)
     .attr("y", -46)
     .attr("text-anchor", "middle")
-    .attr("font-size", 13)
-    .attr("fill", "#374151")
+    .attr("font-size", FONT_SIZE_AXIS_TITLE)
+    .attr("fill", TEXT_PRIMARY)
     .text("Average Temperature (°C)");
 
   /* ── Tooltip ── */
@@ -257,7 +283,7 @@ export function drawQ8(chartInputRows) {
         yScaleTemperature(stripPoint.temperatureCelsius),
       )
       .attr("stroke", STRIP_STROKE)
-      .attr("stroke-opacity", 0.08)
+      .attr("stroke-opacity", STRIP_OPACITY)
       .attr("stroke-width", 1);
   });
 
@@ -284,13 +310,13 @@ export function drawQ8(chartInputRows) {
          Max: ${statRow.max.toFixed(1)} °C<br/>
          Mean: ${statRow.mean.toFixed(1)} °C`,
       );
-      d3.select(this).select(".box-upper").attr("fill", "#9dd9e3");
-      d3.select(this).select(".box-lower").attr("fill", "#3b8a8f");
+      d3.select(this).select(".box-upper").attr("fill", BOX_LIGHT_HOVER);
+      d3.select(this).select(".box-lower").attr("fill", BOX_DARK_HOVER);
     })
     .on("mousemove", (mouseEvent) => {
       floatingTooltip
-        .style("left", mouseEvent.pageX + 14 + "px")
-        .style("top", mouseEvent.pageY - 10 + "px");
+        .style("left", mouseEvent.pageX + TOOLTIP_OFFSET_X + "px")
+        .style("top", mouseEvent.pageY + TOOLTIP_OFFSET_Y + "px");
     })
     .on("mouseleave", function () {
       floatingTooltip.style("opacity", 0);
@@ -312,8 +338,8 @@ export function drawQ8(chartInputRows) {
     .attr("stroke", WHISKER_STROKE)
     .attr("stroke-width", 1)
     .transition()
-    .duration(600)
-    .delay((_statRow, boxIndex) => boxIndex * 22)
+    .duration(BOX_ANIM_DURATION_MS)
+    .delay((_statRow, boxIndex) => boxIndex * BOX_ANIM_STAGGER_MS)
     .ease(d3.easeCubicOut)
     .attr("y2", (statRow) => yScaleTemperature(statRow.max));
 
@@ -340,8 +366,8 @@ export function drawQ8(chartInputRows) {
     .attr("stroke-width", 1)
     .attr("opacity", 0)
     .transition()
-    .delay((_statRow, boxIndex) => 400 + boxIndex * 22)
-    .duration(220)
+    .delay((_statRow, boxIndex) => WHISKER_CAP_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS)
+    .duration(WHISKER_CAP_DURATION_MS)
     .attr("opacity", 1);
 
   /* Lower half (Q1 → median) — darker */
@@ -353,11 +379,11 @@ export function drawQ8(chartInputRows) {
     .attr("y", (statRow) => yScaleTemperature(statRow.median))
     .attr("height", 0)
     .attr("fill", BOX_DARK)
-    .attr("stroke", "white")
+    .attr("stroke", BOX_STROKE)
     .attr("stroke-width", 0.5)
     .transition()
-    .delay((_statRow, boxIndex) => 200 + boxIndex * 22)
-    .duration(500)
+    .delay((_statRow, boxIndex) => BOX_RECT_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS)
+    .duration(BOX_RECT_DURATION_MS)
     .ease(d3.easeCubicOut)
     .attr("y", (statRow) => yScaleTemperature(statRow.median))
     .attr(
@@ -379,11 +405,11 @@ export function drawQ8(chartInputRows) {
     .attr("y", (statRow) => yScaleTemperature(statRow.median))
     .attr("height", 0)
     .attr("fill", BOX_LIGHT)
-    .attr("stroke", "white")
+    .attr("stroke", BOX_STROKE)
     .attr("stroke-width", 0.5)
     .transition()
-    .delay((_statRow, boxIndex) => 200 + boxIndex * 22)
-    .duration(500)
+    .delay((_statRow, boxIndex) => BOX_RECT_DELAY_MS + boxIndex * BOX_ANIM_STAGGER_MS)
+    .duration(BOX_RECT_DURATION_MS)
     .ease(d3.easeCubicOut)
     .attr("y", (statRow) => yScaleTemperature(statRow.q3))
     .attr(
@@ -404,7 +430,7 @@ export function drawQ8(chartInputRows) {
     .attr("x2", bandWidth)
     .attr("y1", (statRow) => yScaleTemperature(statRow.median))
     .attr("y2", (statRow) => yScaleTemperature(statRow.median))
-    .attr("stroke", "white")
+    .attr("stroke", BOX_STROKE)
     .attr("stroke-width", 1.5);
 }
 

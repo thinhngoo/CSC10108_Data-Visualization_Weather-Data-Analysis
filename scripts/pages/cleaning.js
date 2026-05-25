@@ -1,18 +1,17 @@
 const DISTINCT_LIST_MAX = 100;
+const NUM_REGEX = /^-?\d*\.?\d+(e[+/-]?\d+)?$/i;
 
-const NUM_STRING_RE = /^-?\d*\.?\d+(e[+/-]?\d+)?$/i;
-
-function isCellEmpty(val) {
+function isEmpty(val) {
   if (val == null || val === "") return true;
   if (typeof val === "string" && val.trim() === "") return true;
   return false;
 }
 
-function parsesAsNumericCell(val) {
-  if (isCellEmpty(val)) return false;
+function isNumericValue(val) {
+  if (isEmpty(val)) return false;
   const s = String(val).trim();
   const n = Number(s);
-  return !Number.isNaN(n) && NUM_STRING_RE.test(s);
+  return !Number.isNaN(n) && NUM_REGEX.test(s);
 }
 
 function toNumber(val) {
@@ -20,7 +19,7 @@ function toNumber(val) {
 }
 
 /** UTC-midnight-only → date-only display; otherwise date+time. */
-function formatTemporalMs(ms) {
+function formatUtcTimestamp(ms) {
   if (ms == null || Number.isNaN(ms)) return "—";
   const d = new Date(ms);
   if (Number.isNaN(d.getTime())) return "—";
@@ -49,15 +48,11 @@ function formatTemporalMs(ms) {
   }).format(d);
 }
 
-/**
- * Parse cell to epoch ms for date/datetime columns.
- * Does not treat generic integer fields as dates (see NUM_STRING_RE path).
- */
-function parseTemporalToMs(val) {
-  if (isCellEmpty(val)) return null;
+function parseTimestampMs(val) {
+  if (isEmpty(val)) return null;
   const s = String(val).trim();
 
-  if (NUM_STRING_RE.test(s)) {
+  if (NUM_REGEX.test(s)) {
     const n = Number(s);
     if (!Number.isFinite(n)) return null;
     if (Math.abs(n) >= 1e12) return n;
@@ -73,7 +68,7 @@ function parseTemporalToMs(val) {
 function parseClock12hToMsSinceMidnight(val) {
   if (typeof d3 === "undefined" || typeof d3.timeParse !== "function")
     return null;
-  if (isCellEmpty(val)) return null;
+  if (isEmpty(val)) return null;
   const parseTime = d3.timeParse("%I:%M %p");
   const s = String(val).trim();
   const t = parseTime(s);
@@ -109,14 +104,14 @@ function classifyColumns(headers, rows) {
 
     for (const row of rows) {
       const v = row[h];
-      if (isCellEmpty(v)) continue;
+      if (isEmpty(v)) continue;
       sawValue = true;
-      if (!parsesAsNumericCell(v)) allNumeric = false;
+      if (!isNumericValue(v)) allNumeric = false;
 
       const wc = parseClock12hToMsSinceMidnight(v);
       if (wc == null || !Number.isFinite(wc)) allWallClock = false;
 
-      const ti = parseTemporalToMs(v);
+      const ti = parseTimestampMs(v);
       if (ti == null || !Number.isFinite(ti)) allInstantTemporal = false;
     }
 
@@ -182,7 +177,7 @@ function modesOfNumbers(values) {
 function collectNumericSamples(rows, key) {
   const out = [];
   for (const row of rows) {
-    if (isCellEmpty(row[key])) continue;
+    if (isEmpty(row[key])) continue;
     out.push(toNumber(row[key]));
   }
   return out;
@@ -192,10 +187,10 @@ function collectTemporalSamples(rows, key, chronology) {
   const parse =
     chronology === "wallClock"
       ? parseClock12hToMsSinceMidnight
-      : parseTemporalToMs;
+      : parseTimestampMs;
   const out = [];
   for (const row of rows) {
-    if (isCellEmpty(row[key])) continue;
+    if (isEmpty(row[key])) continue;
     const ms = parse(row[key]);
     if (ms != null && Number.isFinite(ms)) out.push(ms);
   }
@@ -206,12 +201,67 @@ function collectDistinctStrings(rows, key) {
   const set = new Set();
   for (const row of rows) {
     const v = row[key];
-    if (isCellEmpty(v)) continue;
+    if (isEmpty(v)) continue;
     set.add(String(v).trim());
   }
   return [...set].sort((a, b) =>
     a.localeCompare(b, "vi", { sensitivity: "base", numeric: true }),
   );
+}
+
+/** Text values listed; numeric/date/time values collapsed to (min,max). */
+function classifyDistinctValueForCompact(s) {
+  if (isNumericValue(s)) {
+    return { kind: "numeric", ms: toNumber(s) };
+  }
+  const wallMs = parseClock12hToMsSinceMidnight(s);
+  if (wallMs != null && Number.isFinite(wallMs)) {
+    return { kind: "wallClock", ms: wallMs };
+  }
+  const instantMs = parseTimestampMs(s);
+  if (instantMs != null && Number.isFinite(instantMs)) {
+    return { kind: "instant", ms: instantMs };
+  }
+  return { kind: "text" };
+}
+
+function formatDistinctValuesCompact(distinct) {
+  const textVals = [];
+  const numericVals = [];
+  const wallClockVals = [];
+  const instantVals = [];
+
+  for (const s of distinct) {
+    const c = classifyDistinctValueForCompact(s);
+    switch (c.kind) {
+      case "numeric":
+        numericVals.push(c.ms);
+        break;
+      case "wallClock":
+        wallClockVals.push(c.ms);
+        break;
+      case "instant":
+        instantVals.push(c.ms);
+        break;
+      default:
+        textVals.push(s);
+    }
+  }
+
+  const parts = [...textVals];
+
+  const addRange = (vals, fmt) => {
+    if (vals.length === 0) return;
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    parts.push(`(${fmt(min)},${fmt(max)})`);
+  };
+
+  addRange(numericVals, (v) => String(v));
+  addRange(wallClockVals, formatTimeOfDayMs);
+  addRange(instantVals, formatUtcTimestamp);
+
+  return parts.join(", ");
 }
 
 function formatPercentRatio(ratio) {
@@ -226,7 +276,7 @@ function computeColumnProfile(rows, columnKey) {
 
   for (const row of rows) {
     const v = row[columnKey];
-    if (isCellEmpty(v)) {
+    if (isEmpty(v)) {
       nullCount++;
     } else {
       distinctNonEmpty.add(String(v).trim());
@@ -332,7 +382,7 @@ function buildStringFieldsSection(rows, stringCols) {
 
   const meta = document.createElement("p");
   meta.className = "dataset-meta";
-  meta.textContent = `Text columns. Distinct lists appear when cardinality is below ${DISTINCT_LIST_MAX}`;
+  meta.textContent = `Text columns. Full distinct lists appear when cardinality is below ${DISTINCT_LIST_MAX}; otherwise text values are listed and numeric, date, or time values are shown as a range.`;
   section.appendChild(meta);
 
   const wrap = document.createElement("div");
@@ -367,7 +417,7 @@ function buildStringFieldsSection(rows, stringCols) {
     const tdVals = document.createElement("td");
     tdVals.className = "dataset-distinct-values-cell";
     if (distinct.length >= DISTINCT_LIST_MAX) {
-      tdVals.textContent = "Too many values";
+      tdVals.textContent = formatDistinctValuesCompact(distinct);
     } else {
       const ul = document.createElement("ul");
       ul.className = "dataset-distinct-values-list";
@@ -469,7 +519,7 @@ function buildNumericFieldsSection(
     const fmtMs = (v, roundMean) => {
       if (v == null || Number.isNaN(v)) return "—";
       const x = roundMean ? Math.round(Number(v)) : Number(v);
-      return timeOfDay ? formatTimeOfDayMs(x) : formatTemporalMs(x);
+      return timeOfDay ? formatTimeOfDayMs(x) : formatUtcTimestamp(x);
     };
 
     const addTemporalStatCell = (v, roundMean = false) => {
