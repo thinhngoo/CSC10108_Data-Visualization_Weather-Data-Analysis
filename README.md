@@ -32,12 +32,37 @@ Then open `http://localhost:8000/`
 ## Project structure
 
 ```text
-templates/       Flask HTML templates (analysis, raw & cleaning dataset views)
-styles/          CSS
-scripts/         Loaders, page renderers, and D3 chart modules
-  charts/        1-3 · 4-6 · 7-9 · 10-12 (analysis question ranges)
-datasets/      CSV dataset served to the browser
-build_cleaned.py   Writes datasets/cleaned-dataset.csv from the fixed raw CSV
-server.py      Flask entrypoint (runs on :8000)
+server.py              Flask entrypoint (runs on :8000)
+build_cleaned.py       Writes datasets/cleaned-dataset.csv from the fixed raw CSV
+requirements.txt       Python dependencies
+
+templates/             Flask HTML templates
+  base.html            Layout shell, D3 CDN, shared assets
+  _sidebar.html        Navigation sidebar partial
+  analysis.html        Chart dashboard (Q1–Q12)
+  raw.html             Raw dataset table view
+  cleaning.html        Data cleaning / profile overview
+
+scripts/               Frontend ES modules
+  main.js              Route bootstrapping, data load, chart dispatch
+  loaders/
+    load.js            Fetch raw & cleaned CSV
+    parser.js          Parse cleaned rows for charts
+    index.js           Loader exports
+  pages/
+    dataset.js         Raw table & cleaning page UI
+    cleaning.js        Column profiles, string/numeric field summaries
+  charts/              D3 chart modules by question range
+    1-3/               Q1–Q3
+    4-6/               Q4–Q6
+    7-9/               Q7–Q9
+    10-12/             Q10–Q12
+
+styles/                CSS (variables, layout, sidebar, charts, dataset views)
+datasets/              Data served to the browser
+  df_weather_fixed_utf8.csv   Raw weather export
+  cleaned-dataset.csv         Cleaned CSV (from build_cleaned.py)
+  countries.geojson           Country boundaries (maps)
+  vn.json                     Vietnam region geometry
 ```
 
